@@ -524,24 +524,6 @@ class PokerTrainer:
     
     def _convert_to_treys_format(self, card_str):
         """Convert card string to Treys format"""
-        # Mapping for suits
-        suit_map = {
-            'H': 'h',  # Hearts
-            'D': 'd',  # Diamonds
-            'C': 'c',  # Clubs
-            'S': 's'   # Spades
-        }
-        
-        # Mapping for ranks (corrected to use Treys format)
-        rank_map = {
-            'T': 'T',  # Ten
-            'J': 'J',  # Jack
-            'Q': 'Q',  # Queen
-            'K': 'K',  # King
-            'A': 'A',  # Ace
-            '10': 'T'  # Convert 10 to T
-        }
-        
         if not card_str:
             return None
             
@@ -550,13 +532,21 @@ class PokerTrainer:
             rank, suit = '10', card_str[2]
         else:
             rank, suit = card_str[0], card_str[1]
+            
+        # Convert rank to Treys format
+        rank = rank.upper()
+        if rank == '10':
+            rank = 'T'
+            
+        # Convert suit to Treys format (lowercase)
+        suit = suit.lower()
         
-        # Convert rank if needed
-        rank = rank_map.get(rank, rank)
-        
-        # Convert suit to lowercase
-        suit = suit_map.get(suit, suit.lower())
-        
+        # Validate
+        if rank not in '23456789TJQKA':
+            raise ValueError(f"Invalid rank: {rank}")
+        if suit not in 'hdcs':
+            raise ValueError(f"Invalid suit: {suit}")
+            
         return f"{rank}{suit}"
 
     def _calculate_real_metrics(self, prediction, game_state):
