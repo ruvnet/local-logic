@@ -1,7 +1,113 @@
 # Advanced Poker AI Training System
 ## Game Theory Optimization & Machine Learning Framework
 
-A sophisticated poker training system that combines game theory optimal (GTO) play with adaptive learning strategies using DSPy and advanced AI techniques. This system helps players improve their decision-making through real-time analysis and adaptive learning.
+A sophisticated poker training system combining game theory optimal (GTO) play with adaptive learning strategies using DSPy and GPT-4-mini.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- OpenAI API key
+- 8GB+ RAM recommended
+
+### Installation
+```bash
+# Clone the repository
+git clone <repository-url>
+cd poker_bot
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set OpenAI API key
+export OPENAI_API_KEY='your-api-key'
+```
+
+### Basic Usage
+```python
+# Start training
+train
+
+# Run hyperparameter tuning
+tune
+
+# Load checkpoint
+load-checkpoint
+```
+
+## 🎯 System Architecture
+
+### Core Components
+- **Decision Engine**: GPT-4-mini powered decision making
+- **Training Framework**: Real-time learning with Monte Carlo simulation
+- **Analysis Tools**: Hand equity and EV calculations
+- **Safety Checks**: Bet sizing and action validation
+
+### Model Configuration
+- Base Model: GPT-4-mini
+- Temperature: 0.7
+- Max Tokens: 256
+- Batch Size: 32 (configurable)
+
+## 📊 Training Metrics
+
+- Win Rate
+- Expected Value (EV)
+- Decision Quality
+- Bluff Efficiency
+- Position-based Performance
+
+## 🎮 Features
+
+### Training System
+- Monte Carlo hand equity simulation
+- Real-time opponent modeling
+- Position-aware strategy optimization
+- Stack-size dependent decision making
+
+### Analysis Tools
+- Hand strength evaluation using Treys
+- Pot odds calculation
+- Implied odds estimation
+- Range analysis
+
+## 🛠 Advanced Usage
+
+### Custom Training Configuration
+```python
+config = TrainingConfig(
+    num_epochs=1000,
+    batch_size=32,
+    learning_rate=0.001,
+    temperature=0.7
+)
+trainer.train(config)
+```
+
+### Hyperparameter Tuning
+```python
+param_grid = {
+    'learning_rate': [0.001, 0.01],
+    'batch_size': [16, 32],
+    'temperature': [0.5, 0.7]
+}
+trainer.tune_hyperparameters(param_grid)
+```
+
+## 📈 Performance Optimization
+
+- Batch processing for efficient training
+- Caching for repeated calculations
+- Optimized Monte Carlo simulations
+- Memory-efficient data handling
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE)
 
 ## 📊 System Architecture
 

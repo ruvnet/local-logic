@@ -118,8 +118,12 @@ class PokerEvaluator(dspy.Evaluate):
 
 class PokerTrainer:
     def __init__(self):
-        # Configure DSPy to use GPT-4
-        dspy.configure(lm='gpt-4')
+        # Configure DSPy to use GPT-4-mini
+        dspy.configure(
+            lm='gpt-4-mini',
+            temperature=0.7,
+            max_tokens=256
+        )
         
         self.agent = PokerAgent()
         self.save_dir = os.path.join(os.path.dirname(__file__), 'training_data')
@@ -309,13 +313,55 @@ class PokerTrainer:
             
         return total_metrics
     
+    def _convert_to_treys_format(self, card_str):
+        """Convert card string to Treys format"""
+        # Mapping for suits
+        suit_map = {
+            'H': 'h',  # Hearts
+            'D': 'd',  # Diamonds
+            'C': 'c',  # Clubs
+            'S': 's'   # Spades
+        }
+        
+        # Mapping for ranks
+        rank_map = {
+            'T': '10',
+            'J': '11',
+            'Q': '12',
+            'K': '13',
+            'A': '14'
+        }
+        
+        if not card_str:
+            return None
+            
+        # Split into rank and suit
+        rank, suit = card_str[0], card_str[1]
+        
+        # Convert rank if needed
+        rank = rank_map.get(rank, rank)
+        
+        # Convert suit to lowercase
+        suit = suit_map.get(suit, suit.lower())
+        
+        return f"{rank}{suit}"
+
     def _calculate_real_metrics(self, prediction, game_state):
         """Calculate real poker metrics"""
         from treys import Card, Evaluator
         
-        # Convert string representations to Treys cards
-        hand = [Card.new(card.strip()) for card in game_state['hand'].split()]
-        board = [Card.new(card.strip()) for card in game_state['table_cards'].split()] if game_state['table_cards'] else []
+        # Convert cards to Treys format
+        hand = [
+            Card.new(self._convert_to_treys_format(card.strip())) 
+            for card in game_state['hand'].split()
+        ]
+        
+        board = []
+        if game_state['table_cards']:
+            board = [
+                Card.new(self._convert_to_treys_format(card.strip()))
+                for card in game_state['table_cards'].split()
+            ]
         
         # Initialize Treys evaluator
         evaluator = Evaluator()
