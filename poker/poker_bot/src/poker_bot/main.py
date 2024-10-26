@@ -267,11 +267,16 @@ def handle_command(command):
         results_dir = trainer.train(config)
 
         print(f"\n{Fore.CYAN}Training complete! Results saved to: {results_dir}")
-        print(f"\nNext steps:")
-        print(f"1. 'tune' - Run hyperparameter tuning")
-        print(f"2. 'play' - Test the trained model")
-        print(f"3. 'quit' - Exit the system")
-        return False
+        while True:
+            print(f"\nNext steps:")
+            print(f"1. 'tune' - Run hyperparameter tuning")
+            print(f"2. 'play' - Test the trained model")
+            print(f"3. 'quit' - Exit the system")
+            next_command = input(f"{Fore.CYAN}Enter command: {Style.RESET_ALL}").lower().strip()
+            if next_command in ["tune", "play", "quit"]:
+                return handle_command(next_command)
+            else:
+                print(f"{Fore.RED}Invalid command. Please try again.{Style.RESET_ALL}")
     elif command == "tune":
         from poker_bot.trainer import PokerTrainer
         trainer = PokerTrainer()
@@ -391,15 +396,10 @@ def main():
         
         if command == "play":
             break
-        if not handle_command(command):
-            # After training or tuning, provide next steps
-            next_command = input(f"{Fore.CYAN}Enter next command ('play', 'tune', 'train', 'quit'): {Style.RESET_ALL}").lower().strip()
-            if next_command == "quit":
-                print(f"\n{Fore.YELLOW}Thank you for using the Poker AI Training System!{Style.RESET_ALL}")
-                return
-            else:
-                command = next_command
-                continue
+        result = handle_command(command)
+        if not result:
+            print(f"\n{Fore.YELLOW}Thank you for using the Poker AI Training System!{Style.RESET_ALL}")
+            break
     
     while True:
         print(f"{Fore.GREEN}{'='*60}")
