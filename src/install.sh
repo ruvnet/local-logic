@@ -12,11 +12,21 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install required Python packages
-pip install flask aider-chat
+pip install streamlit open-interpreter aider-chat
 
-# Set up environment variables
-export FLASK_APP=app.py
-export FLASK_ENV=development
+# Create a streamlit config directory if it doesn't exist
+mkdir -p ~/.streamlit
 
-# Run the Flask application
-flask run --host=0.0.0.0 --port=5000
+# Create or update the Streamlit config file
+cat > ~/.streamlit/config.toml << EOL
+[server]
+port = 8501
+address = "0.0.0.0"
+headless = true
+EOL
+
+# Set execute permissions for the script
+chmod +x app.py
+
+# Start the Streamlit application
+streamlit run app.py
