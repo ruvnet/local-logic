@@ -3,8 +3,6 @@
 
 A sophisticated poker training system that combines game theory optimal (GTO) play with adaptive learning strategies using DSPy and advanced AI techniques. This system helps players improve their decision-making through real-time analysis and adaptive learning.
 
-![Poker AI Banner](assets/banner.png)
-
 ## 📊 System Architecture
 
 ![System Architecture](assets/architecture.png)
