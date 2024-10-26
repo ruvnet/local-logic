@@ -319,27 +319,65 @@ class PokerTrainer:
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch with real data processing"""
+        """Train for one epoch with efficient caching and local model training"""
         total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
         num_batches = 0
-        
-        # Process in batches
+
+        # Cache to store LLM responses
+        if not hasattr(self, 'response_cache'):
+            self.response_cache = {}
+
+        # Collect inputs and outputs for local training
+        inputs = []
+        targets = []
+
         for i in tqdm(range(0, len(train_data), self.config.batch_size), desc="Training Batches"):
             batch = train_data[i:i + self.config.batch_size]
-            
-            # Real batch training using DSPy
+
             for game_state in batch:
-                # Forward pass
-                prediction = self.agent(
-                    hand=game_state['hand'],
-                    table_cards=game_state['table_cards'],
-                    position=game_state['position'],
-                    pot_size=game_state['pot_size'],
-                    stack_size=game_state['stack_size'],
-                    opponent_stack=game_state['opponent_stack'],
-                    game_type=game_state['game_type'],
-                    opponent_tendency=game_state['opponent_tendency']
-                )
+                # Create a unique key for the game state
+                state_key = json.dumps(game_state, sort_keys=True)
+
+                if state_key in self.response_cache:
+                    prediction = self.response_cache[state_key]
+                else:
+                    # Query the LLM and cache the response
+                    prediction = self.agent(
+                        hand=game_state['hand'],
+                        table_cards=game_state['table_cards'],
+                        position=game_state['position'],
+                        pot_size=game_state['pot_size'],
+                        stack_size=game_state['stack_size'],
+                        opponent_stack=game_state['opponent_stack'],
+                        game_type=game_state['game_type'],
+                        opponent_tendency=game_state['opponent_tendency']
+                    )
+                    self.response_cache[state_key] = prediction
+
+                # Prepare data for local model training
+                inputs.append(game_state)
+                targets.append({
+                    'action': prediction[0],
+                    'reasoning': prediction[1]
+                })
+
+            num_batches += 1
+
+        # Train local model using DSPy fine-tuning
+        self.agent.fine_tune(inputs, targets)
+
+        # Optionally, compute metrics using local model predictions
+        for input_data, target in zip(inputs, targets):
+            local_prediction = self.agent.local_model_predict(input_data)
+            metrics = self._calculate_real_metrics(local_prediction, input_data)
+            for metric, value in metrics.items():
+                total_metrics[metric] += value
+
+        # Average metrics
+        for metric in total_metrics:
+            total_metrics[metric] /= (num_batches * self.config.batch_size)
+
+        return total_metrics
                 
                 # Calculate metrics using real poker math
                 metrics = self._calculate_real_metrics(prediction, game_state)
