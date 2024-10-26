@@ -45,10 +45,29 @@ class EarlyStopping:
 class PokerEvaluator(dspy.Evaluate):
     """Evaluator for poker model performance"""
     def __init__(self):
-        super().__init__()
+        # Create a minimal dev set for evaluation
+        devset = [
+            {
+                'input': {
+                    'hand': 'AH KH',
+                    'table_cards': 'QH JH 2C',
+                    'position': 'BTN',
+                    'pot_size': 1000,
+                    'stack_size': 2000,
+                    'opponent_stack': 2000,
+                    'game_type': 'cash',
+                    'opponent_tendency': 'aggressive'
+                },
+                'output': {
+                    'action': 'raise',
+                    'reasoning': 'Flush draw with overcards'
+                }
+            }
+        ]
+        super().__init__(devset=devset)
         self.metrics = [
             "win_rate",
-            "expected_value",
+            "expected_value", 
             "decision_quality",
             "bluff_efficiency"
         ]
@@ -89,6 +108,9 @@ class PokerEvaluator(dspy.Evaluate):
 
 class PokerTrainer:
     def __init__(self):
+        # Configure DSPy to use GPT-4
+        dspy.configure(lm='gpt-4')
+        
         self.agent = PokerAgent()
         self.save_dir = os.path.join(os.path.dirname(__file__), 'training_data')
         os.makedirs(self.save_dir, exist_ok=True)
