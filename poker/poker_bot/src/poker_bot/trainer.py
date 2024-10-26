@@ -235,19 +235,27 @@ class PokerEvaluator(dspy.Evaluate):
         
     def _calculate_preflop_strength(self, hand):
         """Calculate preflop hand strength"""
-        cards = hand.split()
-        if len(cards) != 2:
-            return 0.4  # Default for invalid hands
+        try:
+            cards = hand.split()
+            if len(cards) != 2:
+                return 0.4  # Default for invalid hands
+                
+            # Extract ranks and suits
+            rank1, suit1 = cards[0][0], cards[0][1]
+            rank2, suit2 = cards[1][0], cards[1][1]
+            suited = suit1 == suit2
             
-        # Extract ranks and suits
-        rank1, suit1 = cards[0][0], cards[0][1]
-        rank2, suit2 = cards[1][0], cards[1][1]
-        suited = suit1 == suit2
-        
-        # Convert face cards to values
-        rank_values = {'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-        r1 = rank_values.get(rank1, int(rank1))
-        r2 = rank_values.get(rank2, int(rank2))
+            # Convert face cards to values
+            rank_values = {'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14, 
+                          '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, 
+                          '7': 7, '8': 8, '9': 9}
+            
+            # Use rank_values for all conversions, no direct int() calls
+            r1 = rank_values.get(rank1, 0)
+            r2 = rank_values.get(rank2, 0)
+            
+            if r1 == 0 or r2 == 0:
+                return 0.4  # Invalid rank
         
         # Pocket pairs
         if r1 == r2:
