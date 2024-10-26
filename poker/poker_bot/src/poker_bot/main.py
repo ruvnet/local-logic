@@ -40,20 +40,56 @@ def print_poker_table():
     print(f"{Fore.YELLOW}🎰 POKER DECISION ASSISTANT 🎰")
     print(f"{Fore.GREEN}{'='*60}\n")
 
+def print_instructions():
+    print(f"\n{Fore.YELLOW}📝 CARD FORMAT INSTRUCTIONS:")
+    print(f"{Fore.WHITE}Cards should be entered using two characters:")
+    print(f"{Fore.CYAN}First character (Rank): {Fore.WHITE}2-9, T(10), J(Jack), Q(Queen), K(King), A(Ace)")
+    print(f"{Fore.CYAN}Second character (Suit): {Fore.WHITE}h(♥️), d(♦️), c(♣️), s(♠️)")
+    print(f"{Fore.CYAN}Examples: {Fore.WHITE}AH = Ace of Hearts, KD = King of Diamonds, TC = Ten of Clubs")
+    print(f"{Fore.CYAN}Multiple cards: {Fore.WHITE}Separate with spaces (e.g., 'AH KD' for Ace of Hearts and King of Diamonds)\n")
+
+def print_position_guide():
+    print(f"\n{Fore.YELLOW}🪑 POSITION GUIDE:")
+    print(f"{Fore.CYAN}BTN: {Fore.WHITE}Button/Dealer")
+    print(f"{Fore.CYAN}SB:  {Fore.WHITE}Small Blind")
+    print(f"{Fore.CYAN}BB:  {Fore.WHITE}Big Blind")
+    print(f"{Fore.CYAN}UTG: {Fore.WHITE}Under the Gun (First to act)")
+    print(f"{Fore.CYAN}MP:  {Fore.WHITE}Middle Position")
+    print(f"{Fore.CYAN}CO:  {Fore.WHITE}Cut Off (Before Button)\n")
+
 def main():
     if not OPENAI_API_KEY:
         raise ValueError(f"{Fore.RED}OpenAI API key is not set.{Style.RESET_ALL}")
     
     print_poker_table()
+    print_instructions()
+    print_position_guide()
     
-    # Get input from user
-    hand = get_valid_cards("Enter your hole cards (e.g., AH KH): ", 2)
-    table_cards = get_valid_cards("Enter table cards (e.g., QH JH TH) or press Enter if none: ", 0)
+    print(f"{Fore.GREEN}{'='*60}")
+    print(f"{Fore.YELLOW}🎮 GAME SETUP")
+    print(f"{Fore.GREEN}{'='*60}\n")
+    
+    # Get input from user with improved prompts
+    print(f"{Fore.YELLOW}First, let's get your hole cards:")
+    hand = get_valid_cards(f"Enter your two hole cards: ", 2)
+    
+    print(f"\n{Fore.YELLOW}Now, let's get the community cards (if any):")
+    print(f"{Fore.WHITE}Enter 0-5 cards for pre-flop, flop, turn, or river")
+    table_cards = get_valid_cards(f"Enter table cards or press Enter if none: ", 0)
+    
+    print(f"\n{Fore.YELLOW}What's your position at the table?")
     position = input(f"{Fore.CYAN}Enter position (BTN/SB/BB/UTG/MP/CO): {Style.RESET_ALL}").upper()
-    pot_size = float(input(f"{Fore.CYAN}Enter pot size: {Style.RESET_ALL}"))
-    stack_size = float(input(f"{Fore.CYAN}Enter your stack size: {Style.RESET_ALL}"))
-    opponent_stack = float(input(f"{Fore.CYAN}Enter opponent stack size: {Style.RESET_ALL}"))
+    
+    print(f"\n{Fore.YELLOW}Let's get the money situation:")
+    pot_size = float(input(f"{Fore.CYAN}Enter current pot size ($): {Style.RESET_ALL}"))
+    stack_size = float(input(f"{Fore.CYAN}Enter your stack size ($): {Style.RESET_ALL}"))
+    opponent_stack = float(input(f"{Fore.CYAN}Enter opponent's stack size ($): {Style.RESET_ALL}"))
+    
+    print(f"\n{Fore.YELLOW}What type of game is this?")
     game_type = input(f"{Fore.CYAN}Enter game type (cash/tournament): {Style.RESET_ALL}").lower()
+    
+    print(f"\n{Fore.YELLOW}Finally, tell us about your opponent:")
+    print(f"{Fore.WHITE}(e.g., aggressive, passive, tight, loose, bluffs often, etc.)")
     opponent_history = input(f"{Fore.CYAN}Describe opponent's playing style: {Style.RESET_ALL}")
 
     poker_assistant = PokerAssistant()
