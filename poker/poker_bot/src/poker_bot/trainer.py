@@ -301,16 +301,33 @@ class PokerTrainer:
         """Save a checkpoint"""
         checkpoint = {
             'epoch': epoch + 1,
-            'model_state': self.agent.state_dict(),
-            'metrics': metrics
+            'metrics': {k: float(v) for k, v in metrics.items()},  # Convert to native Python types
+            'model_state': {
+                k: (v if isinstance(v, (int, float, str, bool, list, dict)) else str(v))
+                for k, v in self.agent.state_dict().items()
+            }
         }
         
         checkpoint_path = os.path.join(
             self.save_dir, 
             f'checkpoint_epoch_{epoch+1:03d}.json'
         )
+        
+        # Ensure all values are JSON serializable
+        def make_serializable(obj):
+            if isinstance(obj, (int, float, str, bool)):
+                return obj
+            elif isinstance(obj, (list, tuple)):
+                return [make_serializable(item) for item in obj]
+            elif isinstance(obj, dict):
+                return {str(k): make_serializable(v) for k, v in obj.items()}
+            else:
+                return str(obj)
+        
+        serializable_checkpoint = make_serializable(checkpoint)
+        
         with open(checkpoint_path, 'w') as f:
-            json.dump(checkpoint, f, indent=2)
+            json.dump(serializable_checkpoint, f, indent=2)
             
     def _save_history(self, history: List[Dict]):
         """Save training history"""

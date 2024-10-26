@@ -12,7 +12,10 @@ class PokerAgent(dspy.Module):
     def state_dict(self):
         """Return serializable state"""
         return {
-            'signature': self.signature.__dict__,
+            'signature': {
+                key: str(value) for key, value in vars(self.signature).items()
+                if not key.startswith('_')
+            },
             'state': self.state
         }
     
