@@ -166,6 +166,56 @@ def print_position_guide():
     print(f"{Fore.CYAN}MP:  {Fore.WHITE}Middle Position")
     print(f"{Fore.CYAN}CO:  {Fore.WHITE}Cut Off (Before Button)\n")
 
+def print_help_menu():
+    print(f"\n{Fore.YELLOW}📚 HELP MENU")
+    print(f"{Fore.GREEN}{'='*60}")
+    print(f"{Fore.CYAN}1. Game Basics")
+    print(f"{Fore.WHITE}   - Card formats and input instructions")
+    print(f"{Fore.WHITE}   - Position explanations")
+    print(f"{Fore.WHITE}   - Basic commands")
+    
+    print(f"\n{Fore.CYAN}2. Strategy Guide")
+    print(f"{Fore.WHITE}   - Position-based strategy")
+    print(f"{Fore.WHITE}   - Stack size considerations")
+    print(f"{Fore.WHITE}   - Pot odds and implied odds")
+    
+    print(f"\n{Fore.CYAN}3. Demo Mode")
+    print(f"{Fore.WHITE}   - Practice against AI opponents")
+    print(f"{Fore.WHITE}   - Different skill levels")
+    print(f"{Fore.WHITE}   - Performance analysis")
+    
+    print(f"\n{Fore.CYAN}4. Commands")
+    print(f"{Fore.WHITE}   help     - Show this menu")
+    print(f"{Fore.WHITE}   demo     - Start demo mode")
+    print(f"{Fore.WHITE}   play     - Start regular game")
+    print(f"{Fore.WHITE}   quit     - Exit the program")
+    print(f"{Fore.GREEN}{'='*60}\n")
+
+def handle_command(command):
+    if command == "help":
+        print_help_menu()
+        return True
+    elif command == "demo":
+        from poker_bot.demo_mode import DemoMode
+        demo = DemoMode()
+        print(f"\n{Fore.YELLOW}Select opponent level:")
+        print(f"{Fore.CYAN}1. Beginner")
+        print(f"{Fore.CYAN}2. Intermediate")
+        print(f"{Fore.CYAN}3. Expert")
+        choice = input(f"\n{Fore.WHITE}Enter choice (1-3): {Style.RESET_ALL}")
+        levels = {
+            "1": "beginner",
+            "2": "intermediate",
+            "3": "expert"
+        }
+        level = levels.get(choice, "intermediate")
+        demo.simulate_game(opponent_level=level)
+        return True
+    elif command == "quit":
+        print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
+        return False
+    return True
+
 def main():
     if not OPENAI_API_KEY:
         raise ValueError(f"{Fore.RED}OpenAI API key is not set.{Style.RESET_ALL}")
@@ -173,6 +223,14 @@ def main():
     print_poker_table()
     print_instructions()
     print_position_guide()
+    print(f"\n{Fore.CYAN}Type 'help' for commands and documentation, 'play' to start, or 'demo' for practice mode{Style.RESET_ALL}")
+    
+    while True:
+        command = input(f"\n{Fore.YELLOW}Enter command: {Style.RESET_ALL}").lower()
+        if command == "play":
+            break
+        if not handle_command(command):
+            return
     
     while True:
         print(f"{Fore.GREEN}{'='*60}")
