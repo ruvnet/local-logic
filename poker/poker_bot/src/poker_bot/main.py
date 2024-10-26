@@ -180,62 +180,62 @@ def main():
         print(f"{Fore.GREEN}{'='*60}\n")
         
         # Get input from user with improved prompts
-    print(f"{Fore.YELLOW}First, let's get your hole cards:")
-    hand = get_valid_cards(f"Enter your two hole cards: ", 2)
-    
-    print(f"\n{Fore.YELLOW}Now, let's get the community cards (if any):")
-    print(f"{Fore.WHITE}Enter 0-5 cards for pre-flop, flop, turn, or river")
-    table_cards = get_valid_cards(f"Enter table cards or press Enter if none: ", 0)
-    
-    print(f"\n{Fore.YELLOW}What's your position at the table?")
-    position = input(f"{Fore.CYAN}Enter position (BTN/SB/BB/UTG/MP/CO): {Style.RESET_ALL}").upper()
-    
-    print(f"\n{Fore.YELLOW}Let's get the money situation:")
-    pot_size = float(input(f"{Fore.CYAN}Enter current pot size ($): {Style.RESET_ALL}"))
-    stack_size = float(input(f"{Fore.CYAN}Enter your stack size ($): {Style.RESET_ALL}"))
-    opponent_stack = float(input(f"{Fore.CYAN}Enter opponent's stack size ($): {Style.RESET_ALL}"))
-    
-    print(f"\n{Fore.YELLOW}What type of game is this?")
-    game_type = input(f"{Fore.CYAN}Enter game type (cash/tournament): {Style.RESET_ALL}").lower()
-    
-    print(f"\n{Fore.YELLOW}Finally, tell us about your opponent:")
-    print(f"{Fore.WHITE}(e.g., aggressive, passive, tight, loose, bluffs often, etc.)")
-    opponent_history = input(f"{Fore.CYAN}Describe opponent's playing style: {Style.RESET_ALL}")
-
-    poker_assistant = PokerAssistant()
-    result = poker_assistant.get_action(
-        hand=hand,
-        table_cards=table_cards,
-        position=position,
-        pot_size=pot_size,
-        stack_size=stack_size,
-        opponent_stack=opponent_stack,
-        game_type=game_type,
-        opponent_history=opponent_history
-    )
-
-    # Display results with formatting
-    print(f"\n{Fore.GREEN}{'='*60}")
-    print(f"{Fore.YELLOW}📊 POKER ANALYSIS RESULTS 📊")
-    print(f"{Fore.GREEN}{'='*60}\n")
+        print(f"{Fore.YELLOW}First, let's get your hole cards:")
+        hand = get_valid_cards(f"Enter your two hole cards: ", 2)
         
-    print(f"{Fore.WHITE}Your Hand: {Fore.RED}{format_cards(hand)}")
-    print(f"{Fore.WHITE}Table Cards: {Fore.RED}{format_cards(table_cards)}")
-    print(f"{Fore.WHITE}Position: {Fore.YELLOW}{position}")
-    print(f"{Fore.WHITE}Pot Size: {Fore.GREEN}${pot_size}")
-    print(f"{Fore.WHITE}Your Stack: {Fore.GREEN}${stack_size}")
-    
-    print(f"\n{Fore.YELLOW}🎯 RECOMMENDATION:")
-    print(f"{Fore.WHITE}Action: {Fore.GREEN}{result['recommended_action'].upper()}")
-    print(f"{Fore.WHITE}Reasoning: {Fore.CYAN}{result['reasoning']}")
-    
-    print(f"\n{Fore.YELLOW}📈 ANALYSIS:")
-    print(f"{Fore.WHITE}Hand Strength: {Fore.MAGENTA}{result['hand_strength']:.2%}")
-    print(f"{Fore.WHITE}Hand Type: {Fore.MAGENTA}{result['hand_type']}")
-    print(f"{Fore.WHITE}Position Strategy: {Fore.BLUE}{result['position_strategy']}")
-    print(f"{Fore.WHITE}Opponent Tendency: {Fore.RED}{result['opponent_tendency']}")
-    
-    print(f"\n{Fore.GREEN}{'='*60}\n")
+        print(f"\n{Fore.YELLOW}Now, let's get the community cards (if any):")
+        print(f"{Fore.WHITE}Enter 0-5 cards for pre-flop, flop, turn, or river")
+        table_cards = get_valid_cards(f"Enter table cards or press Enter if none: ", 0)
+        
+        print(f"\n{Fore.YELLOW}What's your position at the table?")
+        position = input(f"{Fore.CYAN}Enter position (BTN/SB/BB/UTG/MP/CO): {Style.RESET_ALL}").upper()
+        
+        print(f"\n{Fore.YELLOW}Let's get the money situation:")
+        pot_size = float(input(f"{Fore.CYAN}Enter current pot size ($): {Style.RESET_ALL}"))
+        stack_size = float(input(f"{Fore.CYAN}Enter your stack size ($): {Style.RESET_ALL}"))
+        opponent_stack = float(input(f"{Fore.CYAN}Enter opponent's stack size ($): {Style.RESET_ALL}"))
+        
+        print(f"\n{Fore.YELLOW}What type of game is this?")
+        game_type = input(f"{Fore.CYAN}Enter game type (cash/tournament): {Style.RESET_ALL}").lower()
+        
+        print(f"\n{Fore.YELLOW}Finally, tell us about your opponent:")
+        print(f"{Fore.WHITE}(e.g., aggressive, passive, tight, loose, bluffs often, etc.)")
+        opponent_history = input(f"{Fore.CYAN}Describe opponent's playing style: {Style.RESET_ALL}")
+
+        poker_assistant = PokerAssistant()
+        result = poker_assistant.get_action(
+            hand=hand,
+            table_cards=table_cards,
+            position=position,
+            pot_size=pot_size,
+            stack_size=stack_size,
+            opponent_stack=opponent_stack,
+            game_type=game_type,
+            opponent_history=opponent_history
+        )
+
+        # Display results with formatting
+        print(f"\n{Fore.GREEN}{'='*60}")
+        print(f"{Fore.YELLOW}📊 POKER ANALYSIS RESULTS 📊")
+        print(f"{Fore.GREEN}{'='*60}\n")
+            
+        print(f"{Fore.WHITE}Your Hand: {Fore.RED}{format_cards(hand)}")
+        print(f"{Fore.WHITE}Table Cards: {Fore.RED}{format_cards(table_cards)}")
+        print(f"{Fore.WHITE}Position: {Fore.YELLOW}{position}")
+        print(f"{Fore.WHITE}Pot Size: {Fore.GREEN}${pot_size}")
+        print(f"{Fore.WHITE}Your Stack: {Fore.GREEN}${stack_size}")
+        
+        print(f"\n{Fore.YELLOW}🎯 RECOMMENDATION:")
+        print(f"{Fore.WHITE}Action: {Fore.GREEN}{result['recommended_action'].upper()}")
+        print(f"{Fore.WHITE}Reasoning: {Fore.CYAN}{result['reasoning']}")
+        
+        print(f"\n{Fore.YELLOW}📈 ANALYSIS:")
+        print(f"{Fore.WHITE}Hand Strength: {Fore.MAGENTA}{result['hand_strength']:.2%}")
+        print(f"{Fore.WHITE}Hand Type: {Fore.MAGENTA}{result['hand_type']}")
+        print(f"{Fore.WHITE}Position Strategy: {Fore.BLUE}{result['position_strategy']}")
+        print(f"{Fore.WHITE}Opponent Tendency: {Fore.RED}{result['opponent_tendency']}")
+        
+        print(f"\n{Fore.GREEN}{'='*60}\n")
         
     # Add situational advice
     provide_situation_advice(
