@@ -289,6 +289,7 @@ class PokerTrainer:
             if epoch % self.config.validation_interval == 0:
                 valid_metrics = self.evaluator.evaluate(self.agent, valid_data)
 
+                train_metrics = self._train_epoch(train_data)
                 metrics = {
                     'epoch': epoch + 1,
                     'train_metrics': train_metrics,
