@@ -178,6 +178,7 @@ class HyperparameterTuner:
         from poker_bot.poker_agent import PokerAgent
         from poker_bot.trainer import PokerEvaluator
         from sklearn.model_selection import ParameterGrid
+        from poker_bot.trainer import TrainingConfig, PokerTrainer
         import json
         
         train_data, valid_data = self._generate_validation_data()
