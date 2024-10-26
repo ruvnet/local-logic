@@ -47,6 +47,13 @@ EXPOSE 8501 5900
 
 # Start script
 COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+RUN chmod +x /app/start.sh && \
+    ln -s /usr/bin/python3 /usr/bin/python
+
+# Ensure executables are in PATH
+ENV PATH="/usr/bin:/usr/local/bin:${PATH}"
+
+# Create VNC password
+RUN mkdir ~/.vnc && x11vnc -storepasswd somepassword ~/.vnc/passwd
 
 ENTRYPOINT ["/app/start.sh"]
