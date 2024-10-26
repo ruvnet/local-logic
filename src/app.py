@@ -18,7 +18,7 @@ class InterpreterUI:
 
         # VNC Display
         st.components.v1.iframe(
-            src="http://localhost:5900",
+            src="/vnc/",  # This will be proxied to the VNC client
             height=600,
             scrolling=True
         )
