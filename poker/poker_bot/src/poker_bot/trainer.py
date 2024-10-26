@@ -106,20 +106,155 @@ class PokerEvaluator(dspy.Evaluate):
         return results
     
     def calculate_win_rate(self, prediction, game):
-        # Implement actual win rate calculation
-        return 0.75  # Placeholder
+        """Calculate actual win rate based on hand strength and action"""
+        from treys import Card, Evaluator
+        
+        # Convert cards to Treys format
+        hand = [Card.new(card.strip()) for card in game['hand'].split()]
+        board = []
+        if game['table_cards']:
+            board = [Card.new(card.strip()) for card in game['table_cards'].split()]
+            
+        evaluator = Evaluator()
+        
+        # Calculate base hand strength
+        if board:
+            hand_value = evaluator.evaluate(board, hand)
+            hand_strength = 1.0 - (hand_value / 7462)  # Normalize
+        else:
+            # Preflop hand strength
+            hand_strength = self._calculate_preflop_strength(game['hand'])
+            
+        # Adjust win rate based on action and position
+        position_multiplier = {
+            'BTN': 1.2, 'CO': 1.15, 'MP': 1.0,
+            'UTG': 0.9, 'BB': 0.95, 'SB': 0.85
+        }.get(game['position'], 1.0)
+        
+        action_multiplier = {
+            'fold': 0.0,
+            'call': 1.0,
+            'raise': 1.2,
+            'all-in': 1.3
+        }.get(prediction.lower(), 1.0)
+        
+        return hand_strength * position_multiplier * action_multiplier
         
     def calculate_ev(self, prediction, game):
-        # Implement actual EV calculation
-        return 0.5  # Placeholder
+        """Calculate expected value based on pot odds and win rate"""
+        pot_size = float(game['pot_size'])
+        stack_size = float(game['stack_size'])
+        
+        # Calculate pot odds
+        if prediction.lower() == 'fold':
+            return 0.0
+            
+        win_rate = self.calculate_win_rate(prediction, game)
+        
+        if prediction.lower() == 'call':
+            return (pot_size * win_rate) - (pot_size * (1 - win_rate))
+        elif prediction.lower() == 'raise':
+            raise_amount = min(pot_size * 2, stack_size)
+            return (raise_amount * win_rate) - (raise_amount * (1 - win_rate))
+            
+        return 0.0
         
     def evaluate_decision_quality(self, prediction, game):
-        # Implement decision quality evaluation
-        return 0.8  # Placeholder
+        """Evaluate decision quality based on GTO principles"""
+        win_rate = self.calculate_win_rate(prediction, game)
+        pot_odds = float(game['pot_size']) / float(game['stack_size'])
+        
+        # Basic GTO check
+        if win_rate > pot_odds and prediction.lower() in ['call', 'raise']:
+            return 1.0
+        elif win_rate < pot_odds and prediction.lower() == 'fold':
+            return 1.0
+        elif win_rate > 0.7 and prediction.lower() == 'raise':
+            return 1.0
+        elif win_rate < 0.3 and prediction.lower() == 'fold':
+            return 1.0
+            
+        return 0.5
         
     def evaluate_bluff_efficiency(self, prediction, game):
-        # Implement bluff efficiency calculation
-        return 0.6  # Placeholder
+        """Calculate bluff efficiency based on fold equity and board texture"""
+        win_rate = self.calculate_win_rate(prediction, game)
+        
+        # Only evaluate bluffs
+        if prediction.lower() != 'raise' or win_rate > 0.5:
+            return 1.0
+            
+        # Calculate fold equity based on opponent tendency
+        fold_equity = {
+            'aggressive': 0.2,
+            'passive': 0.4,
+            'tight': 0.6,
+            'loose': 0.3
+        }.get(game['opponent_tendency'].lower(), 0.3)
+        
+        # Adjust for position
+        position_bonus = {
+            'BTN': 0.2,
+            'CO': 0.15,
+            'MP': 0.1,
+            'UTG': 0.0,
+            'BB': 0.05,
+            'SB': 0.0
+        }.get(game['position'], 0.0)
+        
+        return min(1.0, fold_equity + position_bonus + (0.5 - win_rate))
+        
+    def _calculate_preflop_strength(self, hand):
+        """Calculate preflop hand strength"""
+        cards = hand.split()
+        if len(cards) != 2:
+            return 0.4  # Default for invalid hands
+            
+        # Extract ranks and suits
+        rank1, suit1 = cards[0][0], cards[0][1]
+        rank2, suit2 = cards[1][0], cards[1][1]
+        suited = suit1 == suit2
+        
+        # Convert face cards to values
+        rank_values = {'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+        r1 = rank_values.get(rank1, int(rank1))
+        r2 = rank_values.get(rank2, int(rank2))
+        
+        # Pocket pairs
+        if r1 == r2:
+            if r1 >= 13:  # AA, KK
+                return 0.85
+            elif r1 >= 11:  # QQ, JJ
+                return 0.75
+            elif r1 >= 9:  # TT, 99
+                return 0.65
+            else:
+                return 0.55
+                
+        # High cards
+        high_card = max(r1, r2)
+        low_card = min(r1, r2)
+        gap = high_card - low_card
+        
+        # Premium hands
+        if high_card == 14:  # Ace high
+            if low_card >= 12:  # AK, AQ
+                return 0.8 if suited else 0.7
+            elif low_card >= 10:  # AJ, AT
+                return 0.7 if suited else 0.6
+                
+        # Connected cards
+        if gap == 1:
+            if min(r1, r2) >= 10:  # KQ, QJ, JT
+                return 0.65 if suited else 0.55
+            else:
+                return 0.6 if suited else 0.5
+                
+        # Default values
+        if suited:
+            return max(0.45, 0.6 - (gap * 0.05))
+        else:
+            return max(0.35, 0.5 - (gap * 0.05))
 
 class PokerTrainer:
     def __init__(self):
