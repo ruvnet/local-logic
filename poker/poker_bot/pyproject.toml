@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "poker-bot"
+version = "0.1.0"
+description = ""
+authors = ["rUv <ruv@ruv.net>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+dspy = "^2.5.16"
+openai = "^1.52.2"
+numpy = "^2.1.2"
+pandas = "^2.2.3"
+scikit-learn = "^1.5.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
