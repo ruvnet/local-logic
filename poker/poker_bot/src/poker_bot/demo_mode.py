@@ -150,8 +150,8 @@ class DemoMode:
             print(f"{Fore.GREEN}{'='*60}\n")
             
             # Simulate game state
-            position = random.choice(positions)
-            stack_size = random.choice(stack_sizes)
+            position = random.choice(self.positions)
+            stack_size = random.choice(self.stack_sizes)
             pot_size = random.randint(20, 200)
             opponent_stack = stack_size * random.uniform(0.8, 1.2)
             
@@ -199,6 +199,6 @@ class DemoMode:
         print(f"{Fore.YELLOW}Demo Session Results")
         print(f"{Fore.GREEN}{'='*60}")
         print(f"{Fore.WHITE}Hands Played: {num_hands}")
-        print(f"{Fore.WHITE}Hands Won: {wins}")
-        print(f"{Fore.WHITE}Win Rate: {(wins/num_hands)*100:.1f}%")
+        print(f"{Fore.WHITE}Hands Won: {results['wins']}")
+        print(f"{Fore.WHITE}Win Rate: {(results['wins']/num_hands)*100:.1f}%")
         print(f"{Fore.GREEN}{'='*60}\n")
