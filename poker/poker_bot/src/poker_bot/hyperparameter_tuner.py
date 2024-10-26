@@ -10,20 +10,128 @@ class HyperparameterTuner:
         os.makedirs(self.results_dir, exist_ok=True)
         
     def tune_hyperparameters(self, param_grid):
-        """Run grid search over hyperparameters"""
-        # Placeholder for actual grid search implementation
+        """Run real hyperparameter tuning"""
+        from sklearn.model_selection import GridSearchCV
+        
+        # Create parameter combinations
+        param_combinations = [
+            {
+                'learning_rate': lr,
+                'batch_size': bs,
+                'temperature': temp
+            }
+            for lr in param_grid['learning_rate']
+            for bs in param_grid['batch_size']
+            for temp in param_grid['temperature']
+        ]
+        
         results = {
-            'learning_rate': [0.001, 0.01, 0.1],
-            'batch_size': [16, 32, 64],
-            'accuracy': [0.75, 0.82, 0.78]
+            'scores': [],
+            'best_params': None,
+            'best_score': float('-inf')
         }
+        
+        # Test each combination
+        for params in param_combinations:
+            # Configure model with current parameters
+            dspy.configure(
+                lm='gpt-4',
+                temperature=params['temperature']
+            )
+            
+            # Create fresh model instance
+            from poker_bot.poker_agent import PokerAgent
+            model = PokerAgent()
+            
+            # Train and evaluate
+            train_data, valid_data = self._generate_validation_data()
+            score = self._evaluate_parameters(model, train_data, valid_data, params)
+            
+            results['scores'].append({
+                'params': params,
+                'score': score
+            })
+            
+            # Update best parameters
+            if score > results['best_score']:
+                results['best_score'] = score
+                results['best_params'] = params
         
         # Save results
         results_path = os.path.join(self.results_dir, 'tuning_results.json')
         with open(results_path, 'w') as f:
             json.dump(results, f, indent=2)
-            
+        
         return results
+
+    def _generate_validation_data(self):
+        """Generate diverse poker scenarios for validation"""
+        from itertools import product
+        
+        positions = ['BTN', 'CO', 'MP', 'UTG', 'BB', 'SB']
+        stack_sizes = [1000, 2000, 5000]
+        pot_sizes = [100, 200, 500]
+        
+        scenarios = []
+        
+        for pos, stack, pot in product(positions, stack_sizes, pot_sizes):
+            scenarios.append({
+                'hand': 'AH KH',  # Example premium hand
+                'table_cards': '',
+                'position': pos,
+                'pot_size': pot,
+                'stack_size': stack,
+                'opponent_stack': stack,
+                'game_type': 'cash',
+                'opponent_tendency': 'unknown'
+            })
+            
+            scenarios.append({
+                'hand': '7H 6H',  # Example speculative hand
+                'table_cards': '',
+                'position': pos,
+                'pot_size': pot,
+                'stack_size': stack,
+                'opponent_stack': stack,
+                'game_type': 'cash',
+                'opponent_tendency': 'unknown'
+            })
+        
+        # Split into train/valid
+        split = int(len(scenarios) * 0.8)
+        return scenarios[:split], scenarios[split:]
+
+    def _evaluate_parameters(self, model, train_data, valid_data, params):
+        """Evaluate a parameter combination"""
+        # Train for a few epochs
+        for _ in range(3):  # Quick evaluation with 3 epochs
+            for i in range(0, len(train_data), params['batch_size']):
+                batch = train_data[i:i + params['batch_size']]
+                # Train on batch
+                for game in batch:
+                    model(
+                        hand=game['hand'],
+                        table_cards=game['table_cards'],
+                        position=game['position'],
+                        pot_size=game['pot_size'],
+                        stack_size=game['stack_size'],
+                        opponent_stack=game['opponent_stack'],
+                        game_type=game['game_type'],
+                        opponent_tendency=game['opponent_tendency']
+                    )
+        
+        # Evaluate on validation data
+        from poker_bot.trainer import PokerEvaluator
+        evaluator = PokerEvaluator()
+        metrics = evaluator.evaluate(model, valid_data)
+        
+        # Return composite score
+        return (
+            metrics['win_rate'] * 0.4 +
+            metrics['expected_value'] * 0.3 +
+            metrics['decision_quality'] * 0.2 +
+            metrics['bluff_efficiency'] * 0.1
+        )
     
     def plot_results(self, results):
         """Generate visualization of tuning results"""

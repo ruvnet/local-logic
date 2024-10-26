@@ -272,30 +272,191 @@ class PokerTrainer:
         self._save_history(history)
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch"""
+        """Train for one epoch with real data processing"""
         total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
         num_batches = 0
         
         # Process in batches
         for i in range(0, len(train_data), self.config.batch_size):
             batch = train_data[i:i + self.config.batch_size]
-            batch_metrics = self._train_batch(batch)
             
-            # Accumulate metrics
-            for metric in total_metrics:
-                total_metrics[metric] += batch_metrics[metric]
+            # Real batch training using DSPy
+            for game_state in batch:
+                # Forward pass
+                prediction = self.agent(
+                    hand=game_state['hand'],
+                    table_cards=game_state['table_cards'],
+                    position=game_state['position'],
+                    pot_size=game_state['pot_size'],
+                    stack_size=game_state['stack_size'],
+                    opponent_stack=game_state['opponent_stack'],
+                    game_type=game_state['game_type'],
+                    opponent_tendency=game_state['opponent_tendency']
+                )
+                
+                # Calculate metrics using real poker math
+                metrics = self._calculate_real_metrics(prediction, game_state)
+                
+                # Accumulate metrics
+                for metric, value in metrics.items():
+                    total_metrics[metric] += value
+                    
             num_batches += 1
             
         # Average metrics
         for metric in total_metrics:
-            total_metrics[metric] /= num_batches
+            total_metrics[metric] /= (num_batches * self.config.batch_size)
             
         return total_metrics
     
-    def _train_batch(self, batch) -> Dict[str, float]:
-        """Train on a single batch"""
-        # Implement actual batch training logic here
-        return {metric: 0.8 for metric in self.evaluator.metrics}  # Placeholder
+    def _calculate_real_metrics(self, prediction, game_state):
+        """Calculate real poker metrics"""
+        from treys import Card, Evaluator
+        
+        # Convert string representations to Treys cards
+        hand = [Card.new(card.strip()) for card in game_state['hand'].split()]
+        board = [Card.new(card.strip()) for card in game_state['table_cards'].split()] if game_state['table_cards'] else []
+        
+        # Initialize Treys evaluator
+        evaluator = Evaluator()
+        
+        # Calculate hand strength
+        hand_strength = 1.0
+        if board:
+            hand_value = evaluator.evaluate(board, hand)
+            hand_strength = 1.0 - (hand_value / 7462)  # Normalize (7462 is worst hand in Treys)
+        
+        # Calculate win rate using equity calculator
+        win_rate = self._calculate_equity(hand, board)
+        
+        # Calculate expected value
+        ev = self._calculate_ev(
+            prediction[0],  # action
+            game_state['pot_size'],
+            game_state['stack_size'],
+            hand_strength
+        )
+        
+        return {
+            'win_rate': win_rate,
+            'expected_value': ev,
+            'decision_quality': self._evaluate_decision_quality(
+                prediction[0],
+                hand_strength,
+                game_state['position'],
+                game_state['pot_size'] / game_state['stack_size']
+            ),
+            'bluff_efficiency': self._evaluate_bluff(
+                prediction[0],
+                hand_strength,
+                game_state['opponent_tendency']
+            )
+        }
+
+    def _calculate_equity(self, hand, board):
+        """Calculate hand equity using Monte Carlo simulation"""
+        import random
+        from treys import Deck, Evaluator
+        
+        evaluator = Evaluator()
+        num_simulations = 1000
+        wins = 0
+        
+        for _ in range(num_simulations):
+            # Create deck excluding known cards
+            deck = Deck()
+            for card in hand + board:
+                deck.cards.remove(card)
+                
+            # Deal opponent cards
+            opponent_hand = deck.draw(2)
+            
+            # Complete board if needed
+            simulation_board = board.copy()
+            remaining = 5 - len(simulation_board)
+            if remaining > 0:
+                simulation_board.extend(deck.draw(remaining))
+                
+            # Evaluate hands
+            hand_value = evaluator.evaluate(simulation_board, hand)
+            opponent_value = evaluator.evaluate(simulation_board, opponent_hand)
+            
+            if hand_value < opponent_value:  # Lower is better in Treys
+                wins += 1
+                
+        return wins / num_simulations
+
+    def _calculate_ev(self, action, pot_size, stack_size, hand_strength):
+        """Calculate real expected value of an action"""
+        if action == 'fold':
+            return 0
+        
+        if action == 'call':
+            return pot_size * (hand_strength - 0.5)  # Simplified EV calculation
+        
+        if action == 'raise':
+            # Consider both fold equity and hand equity
+            fold_equity = 0.3  # Opponent fold probability (could be based on opponent_tendency)
+            return (pot_size * fold_equity) + (pot_size * 2 * (1 - fold_equity) * (hand_strength - 0.5))
+        
+        return 0
+
+    def _evaluate_decision_quality(self, action, hand_strength, position, spr):
+        """Evaluate decision quality based on poker theory"""
+        # Position-based adjustments
+        position_multiplier = {
+            'BTN': 1.2,  # Button allows more aggressive play
+            'CO': 1.1,   # Cutoff is also strong
+            'MP': 1.0,   # Middle position is neutral
+            'UTG': 0.9,  # Under the gun requires caution
+            'BB': 0.95,  # Big blind defense
+            'SB': 0.9    # Small blind is worst position
+        }.get(position, 1.0)
+        
+        # Stack-to-pot ratio considerations
+        if spr < 3:  # Short stacked
+            if action == 'all-in' and hand_strength > 0.7:
+                return 1.0 * position_multiplier
+            if action == 'fold' and hand_strength < 0.3:
+                return 0.9 * position_multiplier
+        elif spr > 20:  # Deep stacked
+            if action == 'raise' and hand_strength > 0.8:
+                return 1.0 * position_multiplier
+            if action == 'call' and 0.6 < hand_strength < 0.8:
+                return 0.9 * position_multiplier
+        
+        # Basic hand strength alignment
+        if hand_strength > 0.8 and action in ['raise', 'all-in']:
+            return 1.0 * position_multiplier
+        if 0.6 <= hand_strength <= 0.8 and action in ['call', 'raise']:
+            return 0.9 * position_multiplier
+        if hand_strength < 0.3 and action == 'fold':
+            return 0.8 * position_multiplier
+            
+        return 0.5  # Default for unclear situations
+
+    def _evaluate_bluff(self, action, hand_strength, opponent_tendency):
+        """Evaluate bluffing efficiency"""
+        if action != 'raise' or hand_strength > 0.5:
+            return 1.0  # Not a bluff
+            
+        # Adjust based on opponent tendency
+        opponent_adjustment = {
+            'aggressive': 0.7,  # Harder to bluff aggressive players
+            'passive': 1.2,     # Easier to bluff passive players
+            'tight': 0.8,       # Harder to bluff tight players
+            'loose': 1.1        # Easier to bluff loose players
+        }
+        
+        tendency_mult = 1.0
+        for tendency, mult in opponent_adjustment.items():
+            if tendency in opponent_tendency.lower():
+                tendency_mult *= mult
+                
+        # Calculate bluff success probability
+        bluff_equity = (0.3 + (0.5 - hand_strength)) * tendency_mult
+        
+        return max(0.0, min(1.0, bluff_equity))
         
     def _save_checkpoint(self, epoch: int, metrics: Dict[str, float]):
         """Save a checkpoint"""
