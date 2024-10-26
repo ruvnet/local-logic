@@ -69,35 +69,53 @@ class PokerAgent(dspy.Module):
         return prediction.action, prediction.reasoning
 
     def finetune(self, inputs, targets):
-        """Train the model on a batch of examples"""
+        """Train the model using DSPy's predictor"""
         try:
-            # Store examples for future predictions
-            self.training_examples = list(zip(inputs, targets))
+            # Create a predictor for poker decisions
+            predictor = dspy.Predict(self.signature)
+            
+            # Store training examples
+            self.training_examples = []
+            
+            # Process each example
+            for input_data, target in zip(inputs, targets):
+                try:
+                    # Format example for DSPy
+                    example = {
+                        'input': input_data,
+                        'output': {
+                            'action': target['action'],
+                            'reasoning': target['reasoning']
+                        }
+                    }
+                    self.training_examples.append(example)
+                    
+                    # Train predictor on this example
+                    predictor.train(**example)
+                    
+                except Exception as e:
+                    print(f"Error processing example: {str(e)}")
+                    continue
+            
+            # Store trained predictor
+            self.predictor = predictor
             self.use_local_model = True
             return True
+            
         except Exception as e:
             print(f"Finetune error: {str(e)}")
             return False
 
     def local_model_predict(self, input_data):
-        """Predict using similarity to training examples"""
-        if not hasattr(self, 'training_examples') or not self.training_examples:
-            # Fallback to LLM if no training examples
-            return self.query_llm(input_data)
-            
-        # Find most similar training example
-        best_match = None
-        best_score = -1
-        
-        for train_input, train_target in self.training_examples:
-            score = self._calculate_similarity(input_data, train_input)
-            if score > best_score:
-                best_score = score
-                best_match = train_target
-        
-        if best_match and best_score > 0.5:
-            return best_match['action'], best_match['reasoning']
-        else:
+        """Predict using trained DSPy predictor"""
+        try:
+            if hasattr(self, 'predictor'):
+                prediction = self.predictor(input=input_data)
+                return prediction.action, prediction.reasoning
+            else:
+                return self.query_llm(input_data)
+        except Exception as e:
+            print(f"Local prediction error: {str(e)}")
             return self.query_llm(input_data)
             
     def _calculate_similarity(self, input1, input2):
