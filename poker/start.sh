@@ -30,7 +30,7 @@ check_requirements() {
     if ! check_package poker_bot; then
         echo "Installing poker_bot package and dependencies..."
         cd poker_bot/src
-        pip install -e .
+        pip install -e . >/dev/null 2>&1
         cd ../..
     fi
     
@@ -40,7 +40,7 @@ check_requirements() {
     for package in "${required_packages[@]}"; do
         if ! check_package $package; then
             echo "Installing missing package: $package"
-            pip install $package
+            pip install -q $package >/dev/null 2>&1
         fi
     done
 }
