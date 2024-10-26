@@ -23,21 +23,20 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender1 \
     libxtst6 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m pip install --upgrade pip
 
-# Install Python packages
-COPY requirements.txt /app/requirements.txt
-RUN pip3 install --no-cache-dir -r /app/requirements.txt
+# Create workspace directory
+WORKDIR /app
 
-# Install Aider
-RUN pip3 install aider
+# Copy requirements before installing
+COPY requirements.txt /app/
+RUN pip3 install --no-cache-dir -r requirements.txt \
+    && pip3 install aider
 
 # Set up VNC environment
 ENV DISPLAY=:0
 ENV RESOLUTION=1920x1080x24
-
-# Create workspace directory
-WORKDIR /app
 
 # Copy application files
 COPY . /app/
