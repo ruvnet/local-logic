@@ -1,21 +1,5 @@
 #!/bin/bash
 
-# Function to check requirements in background
-check_requirements_background() {
-    check_requirements > /dev/null 2>&1
-    echo "REQUIREMENTS_DONE" > /tmp/requirements_status
-}
-
-# Function to check if a Python package is installed
-check_package() {
-    # Use pip to check if package is installed
-    if ./venv/bin/pip show "$1" >/dev/null 2>&1; then
-        return 0
-    else
-        return 1
-    fi
-}
-
 display_ai_initialization() {
     echo -e "\n🤖 Initializing Poker AI System..."
     sleep 0.5
@@ -43,7 +27,6 @@ display_ai_initialization() {
     echo -e "\n🎮 AI System Ready!"
 }
 
-# Function to check and install requirements
 check_requirements() {
     echo "Checking requirements..."
     
@@ -59,31 +42,27 @@ check_requirements() {
     # Upgrade pip first
     pip install --upgrade pip >/dev/null 2>&1
     
-    # Install dspy-ai with all dependencies
-    pip install "dspy-ai[all]" >/dev/null 2>&1
+    # Install wheel and setuptools first
+    pip install --upgrade wheel setuptools >/dev/null 2>&1
     
-    # Additional step to ensure dspy is available
-    pip install --no-deps dspy >/dev/null 2>&1
+    # Install DSPy and its dependencies explicitly
+    pip install "dspy-ai[all]" >/dev/null 2>&1
+    pip install dspy >/dev/null 2>&1
     
     # Set PYTHONPATH to include the src directory
-    export PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH"
+    export PYTHONPATH="${PYTHONPATH}:/workspaces/agentic-desktop/poker/poker_bot/src"
     
-    # Install the poker_bot package and its dependencies if not already installed
-    if ! check_package poker_bot; then
-        echo "Installing poker_bot package and dependencies..."
-        cd poker_bot/src
-        pip install -e . >/dev/null 2>&1
-        cd ../..
-    fi
+    # Install the poker_bot package in editable mode
+    cd /workspaces/agentic-desktop/poker/poker_bot/src
+    pip install -e . >/dev/null 2>&1
+    cd -
     
-    # Check for required packages
+    # Install other required packages
     required_packages=(
         "numpy"
         "pandas"
         "treys"
         "pytest"
-        "dspy-ai[all]"
-        "dspy"
         "scikit-learn"
         "colorama"
         "matplotlib"
@@ -92,9 +71,9 @@ check_requirements() {
     )
     
     for package in "${required_packages[@]}"; do
-        if ! check_package $package; then
+        if ! pip show $package >/dev/null 2>&1; then
             echo "Installing missing package: $package"
-            pip install -q $package >/dev/null 2>&1
+            pip install $package >/dev/null 2>&1
         fi
     done
 }
@@ -102,25 +81,21 @@ check_requirements() {
 # Main execution
 echo "🎲 Starting Poker Bot..."
 
-# Start requirements check in background
-echo "🔍 Checking system requirements..."
-check_requirements_background &
+# Clean up any existing virtual environment
+rm -rf venv/
 
-# Display AI initialization while requirements are checking
+# Run requirements check
+check_requirements
+
+# Display AI initialization
 display_ai_initialization
 
-# Wait for requirements check to complete
-while [ ! -f /tmp/requirements_status ]; do
-    sleep 0.1
-done
-rm /tmp/requirements_status
-
-# Change to the poker_bot directory
-cd poker_bot/src/poker_bot
+# Set PYTHONPATH again before running the main script
+export PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH"
 
 # Run the main application
 echo "Launching Poker Bot..."
-PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH" python main.py
+python /workspaces/agentic-desktop/poker/poker_bot/src/poker_bot/main.py
 
 # Deactivate virtual environment when done
 deactivate
