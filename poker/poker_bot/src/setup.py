@@ -5,6 +5,9 @@ setup(
     version="0.1",
     packages=find_packages(),
     install_requires=[
-        # Add your dependencies here
+        "numpy",  # For numerical operations
+        "pandas",  # For data manipulation
+        "treys",  # For poker hand evaluation
+        "pytest",  # For testing
     ],
 )
