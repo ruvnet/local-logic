@@ -237,16 +237,16 @@ def main():
         
         print(f"\n{Fore.GREEN}{'='*60}\n")
         
-    # Add situational advice
-    provide_situation_advice(
-        hand=hand,
-        position=position,
-        pot_size=pot_size,
-        stack_size=stack_size,
-        opponent_stack=opponent_stack,
-        game_type=game_type,
-        opponent_tendency=opponent_history
-    )
+        # Add situational advice
+        provide_situation_advice(
+            hand=hand,
+            position=position,
+            pot_size=pot_size,
+            stack_size=stack_size,
+            opponent_stack=opponent_stack,
+            game_type=game_type,
+            opponent_tendency=opponent_history
+        )
     
         # Ask to continue
         if not get_continue_choice():
