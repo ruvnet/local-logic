@@ -5,6 +5,23 @@ A sophisticated poker training system that combines game theory optimal (GTO) pl
 
 ![Poker AI Banner](assets/banner.png)
 
+## 📊 System Architecture
+
+![System Architecture](assets/architecture.png)
+
+Key components:
+- Decision Engine
+- Training Framework 
+- Analysis Tools
+- Safety Checks
+
+## 📈 Performance Metrics
+
+![Training Progress](assets/training_progress.png)
+- Win rate over time
+- EV calculations
+- Decision quality trends
+
 ## 🎯 System Overview
 
 The Poker AI Training System is designed to:
@@ -48,6 +65,59 @@ The Poker AI Training System is designed to:
   - Temperature scaling
   - Early stopping criteria
   - Validation intervals
+
+## 🛠 Advanced Customization
+
+### Custom Hand Evaluator
+```python
+from poker_bot.hand_evaluator import HandEvaluator
+
+class MyHandEvaluator(HandEvaluator):
+    def calculate_hand_strength(self, cards):
+        # Custom strength calculation
+        strength = super().calculate_hand_strength(cards)
+        # Add position-based adjustments
+        return strength * self.position_multiplier()
+```
+
+### Custom Opponent Model
+```python
+from poker_bot.opponent_model import OpponentModel
+
+class MyOpponentModel(OpponentModel):
+    def analyze_opponent(self, history):
+        tendencies = {
+            'aggression': self.calculate_aggression(history),
+            'bluff_frequency': self.detect_bluffs(history),
+            'position_plays': self.analyze_position_play(history)
+        }
+        return self.generate_counter_strategy(tendencies)
+```
+
+## 🚀 Deployment
+
+### Model Export
+```python
+# Export trained model
+trainer.export_model('my_poker_model.pkl')
+```
+
+### API Integration
+```python
+from poker_bot import PokerAPI
+
+api = PokerAPI(model_path='my_poker_model.pkl')
+api.start(port=8000)
+```
+
+### Docker Deployment
+```bash
+# Build container
+docker build -t poker-bot .
+
+# Run API server
+docker run -p 8000:8000 poker-bot
+```
 
 ## 🚀 Quick Start
 
@@ -208,9 +278,38 @@ Common issues and solutions:
 - [DSPy Documentation](link)
 - [Community Forums](link)
 
+## 🗺 Roadmap
+
+### Upcoming Features
+- Multi-table tournament support
+- Real-time opponent modeling
+- Advanced ICM calculations
+- Hand range visualization
+- Integration with popular poker platforms
+
+### In Development
+- Mobile client application
+- Cloud training infrastructure
+- Collaborative training framework
+
 ## 🤝 Contributing
 
-We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+### Issue Reporting
+- Use the issue template
+- Include hand histories when relevant
+- Provide system information
+
+### Pull Request Guidelines
+- Follow PEP 8 style guide
+- Include unit tests
+- Update documentation
+- Add to CHANGELOG.md
+
+### Code Style
+- Use type hints
+- Document complex algorithms
+- Follow project structure
+- Include docstrings
 
 ## 📄 License
 
