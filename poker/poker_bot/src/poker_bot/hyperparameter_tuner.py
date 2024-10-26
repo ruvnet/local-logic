@@ -138,19 +138,22 @@ class HyperparameterTuner:
                         except Exception as e:
                             print(f"Error processing game in batch: {str(e)}")
                             continue
-        
-        # Evaluate on validation data
-        from poker_bot.trainer import PokerEvaluator
-        evaluator = PokerEvaluator()
-        metrics = evaluator.evaluate(model, valid_data)
-        
-        # Return composite score
-        return (
-            metrics['win_rate'] * 0.4 +
-            metrics['expected_value'] * 0.3 +
-            metrics['decision_quality'] * 0.2 +
-            metrics['bluff_efficiency'] * 0.1
-        )
+                            
+            # Evaluate on validation data
+            from poker_bot.trainer import PokerEvaluator
+            evaluator = PokerEvaluator()
+            metrics = evaluator.evaluate(model, valid_data)
+            
+            # Return composite score
+            return (
+                metrics['win_rate'] * 0.4 +
+                metrics['expected_value'] * 0.3 +
+                metrics['decision_quality'] * 0.2 +
+                metrics['bluff_efficiency'] * 0.1
+            )
+        except Exception as e:
+            print(f"Error in parameter evaluation: {str(e)}")
+            return float('-inf')  # Return worst possible score on error
     
     def plot_results(self, results):
         """Generate visualization of tuning results"""
