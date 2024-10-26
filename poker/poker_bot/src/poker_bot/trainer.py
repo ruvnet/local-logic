@@ -247,6 +247,10 @@ class PokerTrainer:
         
         return train_data, valid_data
 
+    def train_one_epoch(self, train_data):
+        """Train the model for one epoch"""
+        self._train_epoch(train_data)
+
     def train(self, config: TrainingConfig = None):
         """Actual training implementation"""
         if config:

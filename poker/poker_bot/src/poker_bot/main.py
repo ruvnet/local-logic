@@ -254,12 +254,15 @@ def handle_command(command):
         trainer = PokerTrainer()
         config = TrainingConfig(num_epochs=10, batch_size=32)  # Create config object
         trainer.train(config)  # Pass config object
-        return True
+        print(f"\n{Fore.YELLOW}Training complete. You may choose to 'play', 'tune', or 'quit'.")
+        return False  # Return to avoid re-displaying the menu
     elif command == "tune":
         from poker_bot.trainer import PokerTrainer
         trainer = PokerTrainer()
-        trainer.tune_hyperparameters()
-        return True
+        results = trainer.tune_hyperparameters()
+        print(f"\n{Fore.YELLOW}Hyperparameter tuning complete. Best parameters: {results['params']}")
+        print(f"You may now 'train' with best parameters, 'play', or 'quit'.")
+        return False  # Return to avoid re-displaying the menu
     elif command == "list-checkpoints":
         from poker_bot.trainer import PokerTrainer
         trainer = PokerTrainer()
@@ -341,10 +344,18 @@ def main():
     while True:
         display_main_menu()
         command = input().lower().strip()
+        
         if command == "play":
             break
         if not handle_command(command):
-            return
+            # After training or tuning, provide next steps
+            next_command = input(f"{Fore.CYAN}Enter next command ('play', 'tune', 'train', 'quit'): {Style.RESET_ALL}").lower().strip()
+            if next_command == "quit":
+                print(f"\n{Fore.YELLOW}Thank you for using the Poker AI Training System!{Style.RESET_ALL}")
+                return
+            else:
+                command = next_command
+                continue
     
     while True:
         print(f"{Fore.GREEN}{'='*60}")

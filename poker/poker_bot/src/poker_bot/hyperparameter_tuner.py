@@ -174,26 +174,68 @@ class HyperparameterTuner:
         os.makedirs(self.results_dir, exist_ok=True)
 
     def tune_hyperparameters(self, param_grid):
-        """Run hyperparameter tuning"""
-        # Placeholder implementation
-        results = {
-            'best_params': {
-                'learning_rate': 0.01,
-                'batch_size': 32
-            },
-            'scores': [
-                {'params': {'learning_rate': 0.001, 'batch_size': 16}, 'score': 0.75},
-                {'params': {'learning_rate': 0.01, 'batch_size': 32}, 'score': 0.85},
-                {'params': {'learning_rate': 0.1, 'batch_size': 64}, 'score': 0.80}
-            ]
-        }
+        """Run real hyperparameter tuning"""
+        from poker_bot.poker_agent import PokerAgent
+        from poker_bot.trainer import PokerEvaluator
+        from sklearn.model_selection import ParameterGrid
+        import json
         
-        # Save results
-        results_path = os.path.join(self.results_dir, 'tuning_results.json')
-        with open(results_path, 'w') as f:
-            json.dump(results, f, indent=2)
+        train_data, valid_data = self._generate_validation_data()
+        evaluator = PokerEvaluator()
+        results = []
+        
+        parameter_list = list(ParameterGrid(param_grid))
+        
+        for params in parameter_list:
+            # Configure DSPy with current parameters
+            dspy.configure(
+                lm='gpt-4-mini',
+                temperature=params['temperature'],
+                max_tokens=params['max_tokens']
+            )
             
-        return results
+            # Update training configuration
+            config = TrainingConfig(
+                learning_rate=params['learning_rate'],
+                batch_size=params['batch_size'],
+                temperature=params['temperature']
+            )
+            
+            # Initialize agent and trainer
+            model = PokerAgent()
+            trainer = PokerTrainer()
+            trainer.agent = model
+            trainer.config = config
+            
+            # Train model briefly for evaluation
+            trainer.train_one_epoch(train_data)
+            
+            # Evaluate model
+            metrics = evaluator.evaluate(model, valid_data)
+            score = metrics['win_rate']  # Use win rate as the main score
+            
+            # Save results
+            results.append({
+                'params': params,
+                'metrics': metrics,
+                'score': score
+            })
+        
+        # Identify best parameters
+        best_result = max(results, key=lambda x: x['score'])
+        
+        # Save all tuning results to folder
+        tuning_results_path = os.path.join(self.results_dir, 'tuning_results.json')
+        with open(tuning_results_path, 'w') as f:
+            json.dump(results, f, indent=2)
+        
+        # Save best parameters separately
+        best_params_path = os.path.join(self.results_dir, 'best_params.json')
+        with open(best_params_path, 'w') as f:
+            json.dump(best_result, f, indent=2)
+        
+        print(f"Hyperparameter tuning complete. Best parameters saved to {best_params_path}")
+        return best_result
 
     def plot_results(self, results):
         """Plot tuning results"""
