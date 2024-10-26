@@ -12,14 +12,16 @@ class TrainingConfig:
     """Configuration class for training parameters"""
     def __init__(self, **kwargs):
         # Default optimal values
-        self.num_epochs = kwargs.get('num_epochs', 1000)
+        self.num_epochs = kwargs.get('num_epochs', 100)
         self.batch_size = kwargs.get('batch_size', 32)
         self.learning_rate = kwargs.get('learning_rate', 0.001)
-        self.validation_interval = kwargs.get('validation_interval', 50)
+        self.validation_interval = kwargs.get('validation_interval', 5)
         self.patience = kwargs.get('patience', 10)
         self.min_delta = kwargs.get('min_delta', 0.001)
         self.temperature = kwargs.get('temperature', 0.7)
         self.max_tokens = kwargs.get('max_tokens', 256)
+        self.shuffle_data = kwargs.get('shuffle_data', True)  # New parameter
+        self.num_simulations = kwargs.get('num_simulations', 500)  # For Monte Carlo simulations
 
 class EarlyStopping:
     """Early stopping handler"""
@@ -267,7 +269,11 @@ class PokerTrainer:
         history = []
         best_metric = float('-inf')
         
-        for epoch in range(self.config.num_epochs):
+        for epoch in tqdm(range(self.config.num_epochs), desc="Epochs"):
+            print(f"\nEpoch {epoch + 1}/{self.config.num_epochs}")
+            # Shuffle training data if enabled
+            if self.config.shuffle_data:
+                random.shuffle(train_data)
             # Train on batches
             train_metrics = self._train_epoch(train_data)
             
@@ -305,7 +311,7 @@ class PokerTrainer:
         num_batches = 0
         
         # Process in batches
-        for i in range(0, len(train_data), self.config.batch_size):
+        for i in tqdm(range(0, len(train_data), self.config.batch_size), desc="Training Batches"):
             batch = train_data[i:i + self.config.batch_size]
             
             # Real batch training using DSPy
@@ -433,7 +439,7 @@ class PokerTrainer:
         from treys import Deck, Evaluator
         
         evaluator = Evaluator()
-        num_simulations = 1000
+        num_simulations = self.config.num_simulations
         wins = 0
         
         for _ in range(num_simulations):

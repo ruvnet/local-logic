@@ -14,7 +14,8 @@ setup(
         "colorama",  # For colored terminal output
         "matplotlib",  # For plotting and visualization
         "openai",  # For OpenAI API integration
-        "seaborn"  # For statistical visualization
+        "seaborn",  # For statistical visualization
+        "tqdm"  # For progress bars
     ],
     python_requires=">=3.8",
 )

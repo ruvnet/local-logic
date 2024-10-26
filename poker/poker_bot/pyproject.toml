@@ -21,7 +21,8 @@ dependencies = [
     "colorama",
     "matplotlib",
     "openai",
-    "seaborn"
+    "seaborn",
+    "tqdm"
 ]
 
 [project.optional-dependencies]
