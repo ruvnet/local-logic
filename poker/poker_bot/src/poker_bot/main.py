@@ -178,8 +178,8 @@ def main():
         print(f"{Fore.GREEN}{'='*60}")
         print(f"{Fore.YELLOW}🎮 GAME SETUP")
         print(f"{Fore.GREEN}{'='*60}\n")
-    
-    # Get input from user with improved prompts
+        
+        # Get input from user with improved prompts
     print(f"{Fore.YELLOW}First, let's get your hole cards:")
     hand = get_valid_cards(f"Enter your two hole cards: ", 2)
     
@@ -248,10 +248,10 @@ def main():
         opponent_tendency=opponent_history
     )
     
-    # Ask to continue
-    if not get_continue_choice():
-        print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
-        break
+        # Ask to continue
+        if not get_continue_choice():
+            print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
+            break
 
 if __name__ == "__main__":
     main()
