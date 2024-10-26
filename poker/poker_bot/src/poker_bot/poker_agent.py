@@ -69,28 +69,60 @@ class PokerAgent(dspy.Module):
         return prediction.action, prediction.reasoning
 
     def finetune(self, inputs, targets):
-        """Finetune the local model using DSPy's Predict module"""
+        """Train the model on a batch of examples"""
         try:
-            # Create a predictor with our signature
-            predictor = dspy.Predict(self.signature)
-            
-            # Train the predictor on our data
-            for input_data, target in zip(inputs, targets):
-                predictor.train(
-                    input=input_data,
-                    target=target
-                )
-            
-            # Store the trained predictor as our local model
-            self.local_model = predictor
+            # Store examples for future predictions
+            self.training_examples = list(zip(inputs, targets))
             self.use_local_model = True
             return True
-            
         except Exception as e:
             print(f"Finetune error: {str(e)}")
             return False
 
     def local_model_predict(self, input_data):
-        # Predict using the fine-tuned local model
-        prediction = self.local_model(**input_data)
-        return prediction.action, prediction.reasoning
+        """Predict using similarity to training examples"""
+        if not hasattr(self, 'training_examples') or not self.training_examples:
+            # Fallback to LLM if no training examples
+            return self.query_llm(input_data)
+            
+        # Find most similar training example
+        best_match = None
+        best_score = -1
+        
+        for train_input, train_target in self.training_examples:
+            score = self._calculate_similarity(input_data, train_input)
+            if score > best_score:
+                best_score = score
+                best_match = train_target
+        
+        if best_match and best_score > 0.5:
+            return best_match['action'], best_match['reasoning']
+        else:
+            return self.query_llm(input_data)
+            
+    def _calculate_similarity(self, input1, input2):
+        """Calculate similarity between two input states"""
+        score = 0.0
+        total = 0.0
+        
+        # Position match
+        if input1['position'] == input2['position']:
+            score += 1.0
+        total += 1.0
+        
+        # Stack sizes similarity
+        if abs(input1['stack_size'] - input2['stack_size']) < 1000:
+            score += 1.0
+        total += 1.0
+        
+        # Pot size similarity
+        if abs(input1['pot_size'] - input2['pot_size']) < 200:
+            score += 1.0
+        total += 1.0
+        
+        # Game type match
+        if input1['game_type'] == input2['game_type']:
+            score += 1.0
+        total += 1.0
+        
+        return score / total if total > 0 else 0.0
