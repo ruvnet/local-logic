@@ -56,6 +56,12 @@ check_requirements() {
     # Activate virtual environment
     source venv/bin/activate
     
+    # Upgrade pip first
+    pip install --upgrade pip >/dev/null 2>&1
+    
+    # Install dspy-ai specifically (this is the correct package name)
+    pip install dspy-ai >/dev/null 2>&1
+    
     # Set PYTHONPATH to include the src directory
     export PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH"
     
@@ -68,7 +74,18 @@ check_requirements() {
     fi
     
     # Check for required packages
-    required_packages=("numpy" "pandas" "treys" "pytest" "dspy" "scikit-learn" "colorama" "matplotlib" "seaborn")
+    required_packages=(
+        "numpy"
+        "pandas"
+        "treys"
+        "pytest"
+        "dspy-ai"
+        "scikit-learn"
+        "colorama"
+        "matplotlib"
+        "seaborn"
+        "openai"
+    )
     
     for package in "${required_packages[@]}"; do
         if ! check_package $package; then

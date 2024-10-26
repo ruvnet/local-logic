@@ -9,7 +9,7 @@ setup(
         "pandas",  # For data manipulation
         "treys",  # For poker hand evaluation
         "pytest",  # For testing
-        "dspy",   # For DSPy functionality
+        "dspy-ai",   # For DSPy functionality (updated package name)
         "scikit-learn",  # For machine learning functionality
         "colorama",  # For colored terminal output
         "matplotlib",  # For plotting and visualization
