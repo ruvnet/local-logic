@@ -184,7 +184,14 @@ def print_help_menu():
     print(f"{Fore.WHITE}   - Different skill levels")
     print(f"{Fore.WHITE}   - Performance analysis")
     
-    print(f"\n{Fore.CYAN}4. Commands")
+    print(f"\n{Fore.CYAN}4. Training")
+    print(f"{Fore.WHITE}   train              - Start new training session")
+    print(f"{Fore.WHITE}   load-checkpoint    - Load a previous checkpoint")
+    print(f"{Fore.WHITE}   list-checkpoints   - Show available checkpoints")
+    print(f"{Fore.WHITE}   training-history   - Show training history")
+    print(f"{Fore.WHITE}   resume-training    - Continue training from checkpoint")
+    
+    print(f"\n{Fore.CYAN}5. Commands")
     print(f"{Fore.WHITE}   help     - Show this menu")
     print(f"{Fore.WHITE}   demo     - Start demo mode")
     print(f"{Fore.WHITE}   play     - Start regular game")
@@ -210,6 +217,77 @@ def handle_command(command):
         }
         level = levels.get(choice, "intermediate")
         demo.simulate_game(opponent_level=level)
+        return True
+    elif command == "train":
+        from poker_bot.trainer import PokerTrainer
+        print(f"\n{Fore.YELLOW}Starting new training session...")
+        trainer = PokerTrainer()
+        trainer.train(num_epochs=10, batch_size=32)
+        return True
+    elif command == "list-checkpoints":
+        from poker_bot.trainer import PokerTrainer
+        trainer = PokerTrainer()
+        checkpoints = trainer.list_checkpoints()
+        if checkpoints:
+            print(f"\n{Fore.YELLOW}Available Checkpoints:")
+            print(f"{Fore.GREEN}{'='*60}")
+            for idx, checkpoint in enumerate(checkpoints, 1):
+                print(f"{Fore.WHITE}{idx}. {checkpoint}")
+            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+        else:
+            print(f"\n{Fore.RED}No checkpoints found.{Style.RESET_ALL}")
+        return True
+    elif command == "load-checkpoint":
+        from poker_bot.trainer import PokerTrainer
+        trainer = PokerTrainer()
+        checkpoints = trainer.list_checkpoints()
+        
+        if not checkpoints:
+            print(f"\n{Fore.RED}No checkpoints found.{Style.RESET_ALL}")
+            return True
+            
+        print(f"\n{Fore.YELLOW}Available Checkpoints:")
+        for idx, checkpoint in enumerate(checkpoints, 1):
+            print(f"{Fore.WHITE}{idx}. {checkpoint}")
+            
+        try:
+            choice = int(input(f"\n{Fore.CYAN}Enter checkpoint number to load: {Style.RESET_ALL}"))
+            if 1 <= choice <= len(checkpoints):
+                trainer.load_checkpoint(checkpoints[choice-1])
+            else:
+                print(f"{Fore.RED}Invalid checkpoint number.{Style.RESET_ALL}")
+        except ValueError:
+            print(f"{Fore.RED}Invalid input. Please enter a number.{Style.RESET_ALL}")
+        return True
+    elif command == "training-history":
+        from poker_bot.trainer import PokerTrainer
+        trainer = PokerTrainer()
+        if not trainer.display_training_history():
+            print(f"\n{Fore.RED}No training history found.{Style.RESET_ALL}")
+        return True
+    elif command == "resume-training":
+        from poker_bot.trainer import PokerTrainer
+        trainer = PokerTrainer()
+        checkpoints = trainer.list_checkpoints()
+        
+        if not checkpoints:
+            print(f"\n{Fore.RED}No checkpoints found to resume from.{Style.RESET_ALL}")
+            return True
+            
+        print(f"\n{Fore.YELLOW}Available Checkpoints:")
+        for idx, checkpoint in enumerate(checkpoints, 1):
+            print(f"{Fore.WHITE}{idx}. {checkpoint}")
+            
+        try:
+            choice = int(input(f"\n{Fore.CYAN}Enter checkpoint number to resume from: {Style.RESET_ALL}"))
+            if 1 <= choice <= len(checkpoints):
+                if trainer.load_checkpoint(checkpoints[choice-1]):
+                    print(f"\n{Fore.YELLOW}Resuming training...")
+                    trainer.train(num_epochs=10, batch_size=32)
+            else:
+                print(f"{Fore.RED}Invalid checkpoint number.{Style.RESET_ALL}")
+        except ValueError:
+            print(f"{Fore.RED}Invalid input. Please enter a number.{Style.RESET_ALL}")
         return True
     elif command == "quit":
         print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
