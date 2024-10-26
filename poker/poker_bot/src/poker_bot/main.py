@@ -24,16 +24,75 @@ def format_cards(cards_str):
             formatted.append(f"{rank}{CARD_SUITS.get(suit, suit)}")
     return ' '.join(formatted)
 
+def normalize_card_input(card_str):
+    """Normalize card input to uppercase and handle common variations"""
+    # Remove extra spaces and convert to uppercase
+    card_str = card_str.strip().upper()
+    
+    # Handle common variations of suit names
+    replacements = {
+        'HEARTS': 'H', 'HEART': 'H', '♥': 'H', '♥️': 'H',
+        'DIAMONDS': 'D', 'DIAMOND': 'D', '♦': 'D', '♦️': 'D',
+        'CLUBS': 'C', 'CLUB': 'C', '♣': 'C', '♣️': 'C',
+        'SPADES': 'S', 'SPADE': 'S', '♠': 'S', '♠️': 'S'
+    }
+    
+    for old, new in replacements.items():
+        card_str = card_str.replace(old, new)
+    
+    return card_str
+
 def get_valid_cards(prompt, num_cards):
-    """Get valid card input from user"""
+    """Get valid card input from user with more forgiving validation"""
     while True:
-        cards = input(f"{Fore.CYAN}{prompt}{Style.RESET_ALL}").strip()
-        if not cards and num_cards == 0:  # Allow empty input for table cards
-            return ""
-        card_pattern = r'^([2-9TJQKA][hdcs]\s*){' + str(num_cards) + r'}$'
-        if re.match(card_pattern, cards, re.I):
-            return cards.upper()
-        print(f"{Fore.RED}Invalid input! Format example: AH KD (for Ace of Hearts, King of Diamonds){Style.RESET_ALL}")
+        try:
+            cards_input = input(f"{Fore.CYAN}{prompt}{Style.RESET_ALL}").strip()
+            
+            # Handle empty input for table cards
+            if not cards_input and num_cards == 0:
+                return ""
+            
+            # Normalize input
+            cards_input = normalize_card_input(cards_input)
+            
+            # Split into individual cards
+            cards = cards_input.split()
+            
+            # Check number of cards
+            if num_cards > 0 and len(cards) != num_cards:
+                print(f"{Fore.RED}Please enter exactly {num_cards} cards.{Style.RESET_ALL}")
+                continue
+            
+            # Validate each card
+            valid_cards = []
+            valid_ranks = '23456789TJQKA'
+            valid_suits = 'HDCS'
+            
+            for card in cards:
+                # Handle single character input by prompting for suit
+                if len(card) == 1 and card in valid_ranks:
+                    suit = input(f"{Fore.YELLOW}Enter suit for {card} (H/D/C/S): {Style.RESET_ALL}").strip().upper()
+                    card = card + suit
+                
+                if len(card) != 2:
+                    raise ValueError("Each card must be 2 characters")
+                
+                rank, suit = card[0], card[1]
+                
+                if rank not in valid_ranks:
+                    raise ValueError(f"Invalid rank: {rank}")
+                if suit not in valid_suits:
+                    raise ValueError(f"Invalid suit: {suit}")
+                
+                valid_cards.append(card)
+            
+            return ' '.join(valid_cards)
+            
+        except ValueError as e:
+            print(f"{Fore.RED}Invalid input: {str(e)}")
+            print(f"Format examples: AH KD (Ace of Hearts, King of Diamonds)")
+            print(f"Valid ranks: 2-9, T(10), J, Q, K, A")
+            print(f"Valid suits: H(♥️), D(♦️), C(♣️), S(♠️){Style.RESET_ALL}")
 
 def print_poker_table():
     print(f"\n{Fore.GREEN}{'='*60}")
@@ -42,11 +101,13 @@ def print_poker_table():
 
 def print_instructions():
     print(f"\n{Fore.YELLOW}📝 CARD FORMAT INSTRUCTIONS:")
-    print(f"{Fore.WHITE}Cards should be entered using two characters:")
-    print(f"{Fore.CYAN}First character (Rank): {Fore.WHITE}2-9, T(10), J(Jack), Q(Queen), K(King), A(Ace)")
-    print(f"{Fore.CYAN}Second character (Suit): {Fore.WHITE}h(♥️), d(♦️), c(♣️), s(♠️)")
-    print(f"{Fore.CYAN}Examples: {Fore.WHITE}AH = Ace of Hearts, KD = King of Diamonds, TC = Ten of Clubs")
-    print(f"{Fore.CYAN}Multiple cards: {Fore.WHITE}Separate with spaces (e.g., 'AH KD' for Ace of Hearts and King of Diamonds)\n")
+    print(f"{Fore.WHITE}Enter cards in any of these formats:")
+    print(f"{Fore.CYAN}• Single letters/numbers + suit: {Fore.WHITE}AH, KD, 2C")
+    print(f"{Fore.CYAN}• Just the rank (we'll ask for suit): {Fore.WHITE}A, K, 2")
+    print(f"{Fore.CYAN}• With emoji suits: {Fore.WHITE}A♥️ K♦️")
+    print(f"{Fore.CYAN}• Multiple cards: {Fore.WHITE}separate with spaces (AH KD)")
+    print(f"\n{Fore.WHITE}Valid ranks: 2-9, T(10), J(Jack), Q(Queen), K(King), A(Ace)")
+    print(f"Valid suits: H(♥️), D(♦️), C(♣️), S(♠️)\n")
 
 def print_position_guide():
     print(f"\n{Fore.YELLOW}🪑 POSITION GUIDE:")
