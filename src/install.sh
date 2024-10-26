@@ -5,7 +5,7 @@ set -e
 
 # Update package list and install required packages
 sudo apt-get update
-sudo apt-get install -y python3 python3-pip python3-venv
+sudo apt-get install -y python3 python3-pip python3-venv xvfb x11vnc fluxbox
 
 # Create a virtual environment
 python3 -m venv venv

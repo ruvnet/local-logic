@@ -16,6 +16,13 @@ class InterpreterUI:
         )
         st.title("Open Interpreter Enhanced Environment")
 
+        # Add VNC viewer component
+        st.components.v1.iframe(
+            src="http://localhost:5900",  # VNC server port
+            height=600,
+            scrolling=True
+        )
+
         # Command Input
         self.command = st.text_area(
             "Enter your command or code request:",
