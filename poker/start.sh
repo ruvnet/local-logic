@@ -2,7 +2,8 @@
 
 # Function to check if a Python package is installed
 check_package() {
-    python -c "import $1" 2>/dev/null
+    # Use the Python from virtual environment
+    ./venv/bin/python -c "import $1" 2>/dev/null
     return $?
 }
 
