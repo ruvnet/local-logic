@@ -201,21 +201,45 @@ class PokerTrainer:
         train_data = []
         valid_data = []
         
-        # Example data structure matching the agent's forward method signature
-        game_state = {
-            'hand': "AH KH",
-            'table_cards': "QH JH 2C",
-            'position': "BTN",
-            'pot_size': 1000.0,
-            'stack_size': 2000.0,
-            'opponent_stack': 2000.0,
-            'game_type': "cash",
-            'opponent_tendency': "aggressive"
-        }
+        # Example data with correct card formats
+        sample_hands = [
+            {
+                'hand': "AH KH",  # Ace-King suited
+                'table_cards': "QH JH 2C",
+                'position': "BTN",
+                'pot_size': 1000.0,
+                'stack_size': 2000.0,
+                'opponent_stack': 2000.0,
+                'game_type': "cash",
+                'opponent_tendency': "aggressive"
+            },
+            {
+                'hand': "TH TD",  # Pocket tens
+                'table_cards': "AH KD QC",
+                'position': "CO",
+                'pot_size': 500.0,
+                'stack_size': 1500.0,
+                'opponent_stack': 1800.0,
+                'game_type': "cash",
+                'opponent_tendency': "passive"
+            },
+            {
+                'hand': "JC JS",  # Pocket jacks
+                'table_cards': "",  # Preflop
+                'position': "MP",
+                'pot_size': 100.0,
+                'stack_size': 2500.0,
+                'opponent_stack': 2200.0,
+                'game_type': "tournament",
+                'opponent_tendency': "tight"
+            }
+        ]
         
-        # Add more varied game states
-        train_data.append(game_state)
-        valid_data.append(game_state)
+        # Add sample hands to training data
+        train_data.extend(sample_hands)
+        
+        # Create validation data (subset of training data for now)
+        valid_data = sample_hands[:1]
         
         return train_data, valid_data
 
@@ -323,20 +347,24 @@ class PokerTrainer:
             'S': 's'   # Spades
         }
         
-        # Mapping for ranks
+        # Mapping for ranks (corrected to use Treys format)
         rank_map = {
-            'T': '10',
-            'J': '11',
-            'Q': '12',
-            'K': '13',
-            'A': '14'
+            'T': 'T',  # Ten
+            'J': 'J',  # Jack
+            'Q': 'Q',  # Queen
+            'K': 'K',  # King
+            'A': 'A',  # Ace
+            '10': 'T'  # Convert 10 to T
         }
         
         if not card_str:
             return None
             
         # Split into rank and suit
-        rank, suit = card_str[0], card_str[1]
+        if len(card_str) == 3 and card_str[:2] == '10':
+            rank, suit = '10', card_str[2]
+        else:
+            rank, suit = card_str[0], card_str[1]
         
         # Convert rank if needed
         rank = rank_map.get(rank, rank)
