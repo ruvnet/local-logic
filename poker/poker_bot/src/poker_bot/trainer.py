@@ -256,42 +256,46 @@ class PokerEvaluator(dspy.Evaluate):
             
             if r1 == 0 or r2 == 0:
                 return 0.4  # Invalid rank
-        
-        # Pocket pairs
-        if r1 == r2:
-            if r1 >= 13:  # AA, KK
-                return 0.85
-            elif r1 >= 11:  # QQ, JJ
-                return 0.75
-            elif r1 >= 9:  # TT, 99
-                return 0.65
+            
+            # Pocket pairs
+            if r1 == r2:
+                if r1 >= 13:  # AA, KK
+                    return 0.85
+                elif r1 >= 11:  # QQ, JJ
+                    return 0.75
+                elif r1 >= 9:  # TT, 99
+                    return 0.65
+                else:
+                    return 0.55
+                    
+            # High cards
+            high_card = max(r1, r2)
+            low_card = min(r1, r2)
+            gap = high_card - low_card
+            
+            # Premium hands
+            if high_card == 14:  # Ace high
+                if low_card >= 12:  # AK, AQ
+                    return 0.8 if suited else 0.7
+                elif low_card >= 10:  # AJ, AT
+                    return 0.7 if suited else 0.6
+                    
+            # Connected cards
+            if gap == 1:
+                if min(r1, r2) >= 10:  # KQ, QJ, JT
+                    return 0.65 if suited else 0.55
+                else:
+                    return 0.6 if suited else 0.5
+                    
+            # Default values
+            if suited:
+                return max(0.45, 0.6 - (gap * 0.05))
             else:
-                return 0.55
+                return max(0.35, 0.5 - (gap * 0.05))
                 
-        # High cards
-        high_card = max(r1, r2)
-        low_card = min(r1, r2)
-        gap = high_card - low_card
-        
-        # Premium hands
-        if high_card == 14:  # Ace high
-            if low_card >= 12:  # AK, AQ
-                return 0.8 if suited else 0.7
-            elif low_card >= 10:  # AJ, AT
-                return 0.7 if suited else 0.6
-                
-        # Connected cards
-        if gap == 1:
-            if min(r1, r2) >= 10:  # KQ, QJ, JT
-                return 0.65 if suited else 0.55
-            else:
-                return 0.6 if suited else 0.5
-                
-        # Default values
-        if suited:
-            return max(0.45, 0.6 - (gap * 0.05))
-        else:
-            return max(0.35, 0.5 - (gap * 0.05))
+        except Exception as e:
+            print(f"Error calculating preflop strength: {str(e)}")
+            return 0.4  # Default for error cases
 
 class PokerTrainer:
     def __init__(self):
