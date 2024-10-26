@@ -327,14 +327,84 @@ For support, join our [Discord Community](discord-link).
 
 A sophisticated poker training system using AI and game theory optimization to help players improve their decision-making skills.
 
-## Features
+## 🎯 Features
 
-- **Real-time Decision Support**: Get instant analysis of poker situations
-- **AI-Powered Training**: Learn from advanced AI models trained on poker strategy
-- **Game Theory Optimization**: Decisions based on GTO principles
-- **Position-based Strategy**: Contextual advice based on table position
-- **Opponent Modeling**: Adapt to different player types and tendencies
-- **Bankroll Management**: Stack size considerations and risk analysis
+### Core Capabilities
+- **Advanced Decision Engine**
+  - Real-time hand strength evaluation using Treys library
+  - Position-based strategy optimization with DSPy
+  - Dynamic opponent modeling through machine learning
+  - Stack-size aware decisions with ICM considerations
+  - Pot odds and implied odds calculations in real-time
+  - Multi-street planning and hand reading
+  - Range-based decision making
+  - Monte Carlo simulation for equity calculation
+  - Bluff frequency optimization
+  - Fold equity calculations
+
+### Training Framework
+- **Multi-Modal Learning System**
+  - LLM-based initial training using GPT-4-mini
+  - Efficient response caching to minimize API calls
+  - Local model fine-tuning for faster predictions
+  - Example-based learning with similarity matching
+  - Comprehensive metrics tracking and analysis
+  - Early stopping with configurable patience
+  - Automatic checkpointing of best models
+  - Training history visualization
+  - Custom evaluation metrics
+
+### Analysis Tools
+- **Performance Metrics**
+  - Win rate tracking and progression
+  - Expected Value (EV) calculations
+  - Decision quality assessment
+  - Bluff efficiency analysis
+  - Position-based performance metrics
+  - Stack-to-pot ratio considerations
+  - Opponent tendency analysis
+  - Hand strength evaluation
+  - Monte Carlo simulation results
+  - Training convergence metrics
+
+### Safety Features
+- **Risk Management**
+  - Action validation system
+  - Bet size verification
+  - Stack size protection
+  - Bankroll management rules
+  - Tilt detection and prevention
+  - Emergency stop conditions
+  - Input validation and sanitization
+  - Error handling and recovery
+  - Session limits and warnings
+  - Automatic safety adjustments
+
+### Interactive Features
+- **User Interface**
+  - Colored terminal output for better readability
+  - Progress bars for long-running operations
+  - Interactive command system
+  - Detailed help and documentation
+  - Training progress visualization
+  - Real-time feedback and advice
+  - Situation-specific recommendations
+  - Position and stack size guidance
+  - Opponent-specific adjustments
+  - Demo mode with different difficulty levels
+
+### Data Management
+- **Storage and Analysis**
+  - JSON-based result storage
+  - Training history tracking
+  - Checkpoint management
+  - Performance analysis reports
+  - Metric progression tracking
+  - Configuration persistence
+  - Session summaries
+  - Analysis exports
+  - Data visualization capabilities
+  - Backup and recovery systems
 
 ## Installation
 
