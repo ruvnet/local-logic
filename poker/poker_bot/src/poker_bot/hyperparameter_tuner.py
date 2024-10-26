@@ -173,6 +173,43 @@ class HyperparameterTuner:
         self.results_dir = os.path.join(os.path.dirname(__file__), 'tuning_results')
         os.makedirs(self.results_dir, exist_ok=True)
 
+    def _generate_validation_data(self):
+        """Generate diverse poker scenarios for validation"""
+        from itertools import product
+
+        positions = ['BTN', 'CO', 'MP', 'UTG', 'BB', 'SB']
+        stack_sizes = [1000, 2000, 5000]
+        pot_sizes = [100, 200, 500]
+
+        scenarios = []
+
+        for pos, stack, pot in product(positions, stack_sizes, pot_sizes):
+            scenarios.append({
+                'hand': 'AH KH',  # Example premium hand
+                'table_cards': '',
+                'position': pos,
+                'pot_size': pot,
+                'stack_size': stack,
+                'opponent_stack': stack,
+                'game_type': 'cash',
+                'opponent_tendency': 'unknown'
+            })
+
+            scenarios.append({
+                'hand': '7H 6H',  # Example speculative hand
+                'table_cards': '',
+                'position': pos,
+                'pot_size': pot,
+                'stack_size': stack,
+                'opponent_stack': stack,
+                'game_type': 'cash',
+                'opponent_tendency': 'unknown'
+            })
+
+        # Split into train/valid
+        split = int(len(scenarios) * 0.8)
+        return scenarios[:split], scenarios[split:]
+
     def tune_hyperparameters(self, param_grid):
         """Run real hyperparameter tuning"""
         from poker_bot.poker_agent import PokerAgent
