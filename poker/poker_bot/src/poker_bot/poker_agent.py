@@ -7,6 +7,22 @@ class PokerAgent(dspy.Module):
         super().__init__()
         self.signature = PokerSignature
         self.safety_checks = SafetyChecks()
+        self.state = {}  # Add state dictionary
+    
+    def state_dict(self):
+        """Return serializable state"""
+        return {
+            'signature': self.signature.__dict__,
+            'state': self.state
+        }
+    
+    def load_state_dict(self, state_dict):
+        """Load state from dictionary"""
+        self.state = state_dict.get('state', {})
+        # Restore any signature attributes
+        sig_state = state_dict.get('signature', {})
+        for key, value in sig_state.items():
+            setattr(self.signature, key, value)
     
     def forward(self, hand: str, table_cards: str, position: str, pot_size: float,
                 stack_size: float, opponent_stack: float, game_type: str, opponent_tendency: str):

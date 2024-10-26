@@ -147,6 +147,35 @@ def print_poker_table():
     print(f"{Fore.YELLOW}🎰 POKER DECISION ASSISTANT 🎰")
     print(f"{Fore.GREEN}{'='*60}\n")
 
+def display_main_menu():
+    print(f"\n{Fore.GREEN}{'='*60}")
+    print(f"{Fore.YELLOW}🎰 POKER AI TRAINING SYSTEM 🎮")
+    print(f"{Fore.GREEN}{'='*60}\n")
+    
+    print(f"{Fore.CYAN}🎯 MAIN MENU:")
+    print(f"\n{Fore.YELLOW}1. Training & Analysis")
+    print(f"{Fore.WHITE}   🔄 train     - Start new training session")
+    print(f"{Fore.WHITE}   📊 tune      - Optimize hyperparameters")
+    print(f"{Fore.WHITE}   📈 history   - View training metrics")
+    
+    print(f"\n{Fore.YELLOW}2. Game Modes")
+    print(f"{Fore.WHITE}   🎮 play      - Start poker assistant")
+    print(f"{Fore.WHITE}   🤖 demo      - Practice with AI opponent")
+    print(f"{Fore.WHITE}   🔍 analyze   - Analyze hand history")
+    
+    print(f"\n{Fore.YELLOW}3. Model Management")
+    print(f"{Fore.WHITE}   💾 save      - Save current model")
+    print(f"{Fore.WHITE}   📂 load      - Load saved model")
+    print(f"{Fore.WHITE}   📋 list      - Show saved models")
+    
+    print(f"\n{Fore.YELLOW}4. System")
+    print(f"{Fore.WHITE}   ⚙️  config    - Configure settings")
+    print(f"{Fore.WHITE}   ❓ help      - Show detailed help")
+    print(f"{Fore.WHITE}   🚪 quit      - Exit system")
+    
+    print(f"\n{Fore.GREEN}{'='*60}")
+    print(f"{Fore.CYAN}Enter command: {Style.RESET_ALL}", end='')
+
 def print_instructions():
     print(f"\n{Fore.YELLOW}📝 CARD FORMAT INSTRUCTIONS:")
     print(f"{Fore.WHITE}Enter cards in any of these formats:")
@@ -308,10 +337,10 @@ def main():
     print_poker_table()
     print_instructions()
     print_position_guide()
-    print(f"\n{Fore.CYAN}Type 'help' for commands and documentation, 'play' to start, or 'demo' for practice mode{Style.RESET_ALL}")
     
     while True:
-        command = input(f"\n{Fore.YELLOW}Enter command: {Style.RESET_ALL}").lower()
+        display_main_menu()
+        command = input().lower().strip()
         if command == "play":
             break
         if not handle_command(command):
