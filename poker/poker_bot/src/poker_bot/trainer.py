@@ -76,6 +76,33 @@ class PokerEvaluator(dspy.Evaluate):
             "decision_quality",
             "bluff_efficiency"
         ]
+
+    def _convert_to_treys_format(self, card_str):
+        """Convert card string to Treys format"""
+        if not card_str:
+            return None
+            
+        # Split into rank and suit
+        if len(card_str) == 3 and card_str[:2] == '10':
+            rank, suit = '10', card_str[2]
+        else:
+            rank, suit = card_str[0], card_str[1]
+            
+        # Convert rank to Treys format
+        rank = rank.upper()
+        if rank == '10':
+            rank = 'T'
+            
+        # Convert suit to Treys format (lowercase)
+        suit = suit.lower()
+        
+        # Validate
+        if rank not in '23456789TJQKA':
+            raise ValueError(f"Invalid rank: {rank}")
+        if suit not in 'hdcs':
+            raise ValueError(f"Invalid suit: {suit}")
+            
+        return f"{rank}{suit}"
     
     def evaluate(self, model, eval_data) -> Dict[str, float]:
         results = {metric: 0.0 for metric in self.metrics}
@@ -110,10 +137,12 @@ class PokerEvaluator(dspy.Evaluate):
         from treys import Card, Evaluator
         
         # Convert cards to Treys format
-        hand = [Card.new(card.strip()) for card in game['hand'].split()]
+        hand = [Card.new(self._convert_to_treys_format(card.strip())) 
+               for card in game['hand'].split()]
         board = []
         if game['table_cards']:
-            board = [Card.new(card.strip()) for card in game['table_cards'].split()]
+            board = [Card.new(self._convert_to_treys_format(card.strip())) 
+                    for card in game['table_cards'].split()]
             
         evaluator = Evaluator()
         
