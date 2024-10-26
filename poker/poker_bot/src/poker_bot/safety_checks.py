@@ -1,6 +1,9 @@
 import dspy
 
 class SafetyChecks(dspy.Assert):
+    def __init__(self):
+        super().__init__(result=True)  # Initialize with default result=True
+        
     def verify_bet_size(self, bet_size: float, pot_size: float, stack_size: float):
         return 0 <= bet_size <= min(pot_size * 3, stack_size)
     
