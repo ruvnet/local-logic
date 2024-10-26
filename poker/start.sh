@@ -35,7 +35,7 @@ check_requirements() {
     fi
     
     # Check for required packages
-    required_packages=("numpy" "pandas" "treys" "pytest" "dspy" "scikit-learn" "colorama" "matplotlib")
+    required_packages=("numpy" "pandas" "treys" "pytest" "dspy" "scikit-learn" "colorama" "matplotlib" "seaborn")
     
     for package in "${required_packages[@]}"; do
         if ! check_package $package; then

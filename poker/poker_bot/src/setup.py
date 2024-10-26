@@ -13,7 +13,8 @@ setup(
         "scikit-learn",  # For machine learning functionality
         "colorama",  # For colored terminal output
         "matplotlib",  # For plotting and visualization
-        "openai"  # For OpenAI API integration
+        "openai",  # For OpenAI API integration
+        "seaborn"  # For statistical visualization
     ],
     python_requires=">=3.8",
 )

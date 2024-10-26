@@ -20,7 +20,8 @@ dependencies = [
     "scikit-learn",
     "colorama",
     "matplotlib",
-    "openai"
+    "openai",
+    "seaborn"
 ]
 
 [project.optional-dependencies]

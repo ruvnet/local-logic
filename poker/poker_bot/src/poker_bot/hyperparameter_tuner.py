@@ -53,10 +53,11 @@ import os
 import json
 try:
     import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
+    import seaborn as sns
+    HAS_PLOTTING = True
 except ImportError:
-    HAS_MATPLOTLIB = False
-    print("Warning: matplotlib not installed. Plotting functionality will be disabled.")
+    HAS_PLOTTING = False
+    print("Warning: matplotlib or seaborn not installed. Plotting functionality will be disabled.")
 
 class HyperparameterTuner:
     def __init__(self):
@@ -87,8 +88,8 @@ class HyperparameterTuner:
 
     def plot_results(self, results):
         """Plot tuning results"""
-        if not HAS_MATPLOTLIB:
-            print("Cannot create plot: matplotlib is not installed")
+        if not HAS_PLOTTING:
+            print("Cannot create plot: matplotlib or seaborn not installed")
             return
 
         try:
