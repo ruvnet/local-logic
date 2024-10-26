@@ -75,19 +75,29 @@ class HyperparameterTuner:
         stack_sizes = [1000, 2000, 5000]
         pot_sizes = [100, 200, 500]
         
+        # Define sample hands that are properly formatted
+        sample_hands = [
+            "AH KH",  # Premium suited
+            "QS QH",  # Pocket pair
+            "JD TC",  # Connected cards
+            "8H 7H",  # Small suited
+            "AS KD"   # Big cards
+        ]
+        
         scenarios = []
         
         for pos, stack, pot in product(positions, stack_sizes, pot_sizes):
-            scenarios.append({
-                'hand': 'AH KH',  # Example premium hand
-                'table_cards': '',
-                'position': pos,
-                'pot_size': pot,
-                'stack_size': stack,
-                'opponent_stack': stack,
-                'game_type': 'cash',
-                'opponent_tendency': 'unknown'
-            })
+            for hand in sample_hands:
+                scenarios.append({
+                    'hand': hand,
+                    'table_cards': '',
+                    'position': pos,
+                    'pot_size': float(pot),
+                    'stack_size': float(stack),
+                    'opponent_stack': float(stack),
+                    'game_type': 'cash',
+                    'opponent_tendency': 'unknown'
+                })
             
             scenarios.append({
                 'hand': '7H 6H',  # Example speculative hand
@@ -106,23 +116,28 @@ class HyperparameterTuner:
 
     def _evaluate_parameters(self, model, train_data, valid_data, params):
         """Evaluate a parameter combination"""
-        # Train for a few epochs
-        num_epochs = params.get('num_epochs', 3)
-        for _ in range(num_epochs):
-            for i in range(0, len(train_data), params['batch_size']):
-                batch = train_data[i:i + params['batch_size']]
-                # Train on batch
-                for game in batch:
-                    model(
-                        hand=game['hand'],
-                        table_cards=game['table_cards'],
-                        position=game['position'],
-                        pot_size=game['pot_size'],
-                        stack_size=game['stack_size'],
-                        opponent_stack=game['opponent_stack'],
-                        game_type=game['game_type'],
-                        opponent_tendency=game['opponent_tendency']
-                    )
+        try:
+            # Train for specified epochs
+            num_epochs = params.get('num_epochs', 3)
+            for _ in range(num_epochs):
+                for i in range(0, len(train_data), params['batch_size']):
+                    batch = train_data[i:i + params['batch_size']]
+                    # Train on batch
+                    for game in batch:
+                        try:
+                            model(
+                                hand=game['hand'],
+                                table_cards=game['table_cards'],
+                                position=game['position'],
+                                pot_size=float(game['pot_size']),
+                                stack_size=float(game['stack_size']),
+                                opponent_stack=float(game['opponent_stack']),
+                                game_type=game['game_type'],
+                                opponent_tendency=game['opponent_tendency']
+                            )
+                        except Exception as e:
+                            print(f"Error processing game in batch: {str(e)}")
+                            continue
         
         # Evaluate on validation data
         from poker_bot.trainer import PokerEvaluator
