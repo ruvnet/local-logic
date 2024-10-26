@@ -435,27 +435,31 @@ A sophisticated poker training system using AI and game theory optimization to h
 
 ## Features
 
-- **Real-time Decision Support**: Get instant analysis of poker situations
-- **AI-Powered Training**: Learn from advanced AI models trained on poker strategy
-- **Game Theory Optimization**: Decisions based on GTO principles
-- **Position-based Strategy**: Contextual advice based on table position
-- **Opponent Modeling**: Adapt to different player types and tendencies
-- **Bankroll Management**: Stack size considerations and risk analysis
+- **Advanced Decision Engine**: Leveraging GPT-4-mini and DSPy for sophisticated decision-making.
+- **Efficient Training System**: Caching LLM responses and training a local model to improve performance and reduce API calls.
+- **Enhanced Hyperparameter Tuning**: User-defined parameter grids with detailed results and visualizations.
+- **Comprehensive Analysis Tools**: Hand equity calculations, EV estimation, decision quality metrics, and bluff efficiency analysis.
+- **Safety Mechanisms**: Implemented safety checks for actions and bet sizes to ensure valid gameplay.
+- **Position and Stack-aware Strategies**: Dynamic strategies based on player position and stack sizes.
+- **Logging and Reporting**: Detailed training logs, performance metrics, and automated reports in JSON and human-readable formats.
+- **Demo Mode**: Practice against AI opponents with different skill levels.
+- **Interactive Command-Line Interface**: User-friendly prompts and inputs for seamless interaction.
 
 ## Installation
 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd poker/poker_bot
+cd poker_bot
 
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install dependencies
+pip install -r requirements.txt
 
-# Install the package
-pip install -e .
+# Set OpenAI API key
+export OPENAI_API_KEY='your-api-key'
 ```
+
+*Note: Replace `<repository-url>` with the actual URL of the repository.*
 
 ## Quick Start
 
@@ -481,32 +485,41 @@ print(f"Recommended Action: {result['recommended_action']}")
 print(f"Reasoning: {result['reasoning']}")
 ```
 
-## Training System Architecture
+## 🎯 Training System Architecture
 
-The training system consists of several key components:
+### Core Components
 
-1. **PokerAgent**: Core decision-making model using DSPy
-2. **PokerTrainer**: Handles model training and optimization
-3. **HyperparameterTuner**: Optimizes model parameters
-4. **SafetyChecks**: Validates actions and bet sizes
-5. **PokerEvaluator**: Measures model performance
+1. **PokerAgent**: Enhanced decision-making model with caching and local model training using DSPy.
+2. **PokerTrainer**: Manages training, including caching LLM responses and fine-tuning a local model.
+3. **HyperparameterTuner**: Improved hyperparameter tuning with user-defined parameter grids and plotting of results.
+4. **SafetyChecks**: Validates actions and bet sizes to ensure compliance with game rules.
+5. **PokerEvaluator**: Evaluates model performance using real poker metrics and Monte Carlo simulations.
 
-### Training Process
+### Improved Training Process
+
+The training process now efficiently caches LLM responses to minimize API calls and trains a local model using DSPy's fine-tuning capabilities.
 
 ```python
 from poker_bot.trainer import PokerTrainer, TrainingConfig
 
-# Configure training parameters
+# Configure training parameters with user inputs
 config = TrainingConfig(
-    num_epochs=1000,
+    num_epochs=100,  # You can specify this as per your need
     batch_size=32,
-    learning_rate=0.001
+    learning_rate=0.001,
+    temperature=0.7
 )
 
 # Initialize and start training
 trainer = PokerTrainer()
-trainer.train(config)
+results_dir = trainer.train(config)
 ```
+
+Key enhancements:
+
+- **Caching Mechanism**: Stores LLM responses to avoid redundant API calls, improving training speed and reducing costs.
+- **Local Model Training**: Fine-tunes a local model on the cached data, reducing reliance on the LLM during training epochs.
+- **Real Poker Metrics**: Evaluates the model using metrics like win rate, expected value, decision quality, and bluff efficiency.
 
 ## Customization
 
@@ -527,18 +540,36 @@ checkpoints = trainer.list_checkpoints()
 trainer.load_checkpoint(checkpoints[0])
 ```
 
-## Performance Monitoring
+## 📈 Performance Monitoring and Reporting
 
-Monitor training progress and model performance:
+Monitor training progress and model performance with enhanced metrics and automated reporting.
+
+### Training Metrics
+
+- **Win Rate**
+- **Expected Value (EV)**
+- **Decision Quality**
+- **Bluff Efficiency**
+- **Position-based Performance**
+
+### Viewing Training History
 
 ```python
 # Display training history
 trainer.display_training_history()
-
-# View latest metrics
-evaluator = PokerEvaluator()
-metrics = evaluator.evaluate(model, eval_data)
 ```
+
+### Automated Reporting
+
+After training, comprehensive reports are generated, including:
+
+- **Training Duration**
+- **Final Metrics Summary**
+- **Best Epoch and Convergence Rate**
+- **Metrics Progression**
+- **Performance Analysis at Different Stages**
+
+Reports are saved in both JSON and human-readable formats in the `training_results` directory.
 
 ## Contributing
 
