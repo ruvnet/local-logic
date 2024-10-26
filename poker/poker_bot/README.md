@@ -1,19 +1,30 @@
 # Advanced Poker AI Training System
 ## Game Theory Optimization & Machine Learning Framework
 
-A sophisticated poker training system that combines game theory optimal (GTO) play with adaptive learning strategies using DSPy and advanced AI techniques.
+A sophisticated poker training system that combines game theory optimal (GTO) play with adaptive learning strategies using DSPy and advanced AI techniques. This system helps players improve their decision-making through real-time analysis and adaptive learning.
 
 ![Poker AI Banner](assets/banner.png)
+
+## 🎯 System Overview
+
+The Poker AI Training System is designed to:
+- Analyze hand situations in real-time
+- Provide GTO-based recommendations
+- Adapt to different playing styles
+- Learn from player decisions
+- Optimize strategies based on position and stack depth
 
 ## 🎯 Features
 
 ### Core Capabilities
 - **Advanced Decision Making Engine**
-  - Real-time hand strength evaluation
-  - Position-based strategy optimization
-  - Dynamic opponent modeling
-  - Stack-size aware decisions
-  - Pot odds and implied odds calculations
+  - Real-time hand strength evaluation using Treys library
+  - Position-based strategy optimization with DSPy
+  - Dynamic opponent modeling through machine learning
+  - Stack-size aware decisions with ICM considerations
+  - Pot odds and implied odds calculations in real-time
+  - Multi-street planning and hand reading
+  - Range-based decision making
 
 ### Training Framework
 - **Multi-Modal Learning System**
