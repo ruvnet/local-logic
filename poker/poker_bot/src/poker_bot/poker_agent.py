@@ -5,12 +5,12 @@ from poker_bot.safety_checks import SafetyChecks
 class PokerAgent(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.signature = PokerSignature()
+        self.signature = PokerSignature
         self.safety_checks = SafetyChecks()
     
     def forward(self, hand: str, table_cards: str, position: str, pot_size: float,
                 stack_size: float, opponent_stack: float, game_type: str, opponent_tendency: str):
-        # Use the signature directly for prediction
+        # Create a new instance with the input parameters
         prediction = self.signature(
             hand=hand,
             table_cards=table_cards,
@@ -19,7 +19,9 @@ class PokerAgent(dspy.Module):
             stack_size=stack_size,
             opponent_stack=opponent_stack,
             game_type=game_type,
-            opponent_tendency=opponent_tendency
+            opponent_tendency=opponent_tendency,
+            action="fold",  # Default action
+            reasoning=""    # Default reasoning
         )
         
         # Apply safety checks
