@@ -214,44 +214,44 @@ def main():
         opponent_history=opponent_history
     )
 
-        # Display results with formatting
-        print(f"\n{Fore.GREEN}{'='*60}")
-        print(f"{Fore.YELLOW}📊 POKER ANALYSIS RESULTS 📊")
-        print(f"{Fore.GREEN}{'='*60}\n")
+    # Display results with formatting
+    print(f"\n{Fore.GREEN}{'='*60}")
+    print(f"{Fore.YELLOW}📊 POKER ANALYSIS RESULTS 📊")
+    print(f"{Fore.GREEN}{'='*60}\n")
         
-        print(f"{Fore.WHITE}Your Hand: {Fore.RED}{format_cards(hand)}")
-        print(f"{Fore.WHITE}Table Cards: {Fore.RED}{format_cards(table_cards)}")
-        print(f"{Fore.WHITE}Position: {Fore.YELLOW}{position}")
-        print(f"{Fore.WHITE}Pot Size: {Fore.GREEN}${pot_size}")
-        print(f"{Fore.WHITE}Your Stack: {Fore.GREEN}${stack_size}")
+    print(f"{Fore.WHITE}Your Hand: {Fore.RED}{format_cards(hand)}")
+    print(f"{Fore.WHITE}Table Cards: {Fore.RED}{format_cards(table_cards)}")
+    print(f"{Fore.WHITE}Position: {Fore.YELLOW}{position}")
+    print(f"{Fore.WHITE}Pot Size: {Fore.GREEN}${pot_size}")
+    print(f"{Fore.WHITE}Your Stack: {Fore.GREEN}${stack_size}")
+    
+    print(f"\n{Fore.YELLOW}🎯 RECOMMENDATION:")
+    print(f"{Fore.WHITE}Action: {Fore.GREEN}{result['recommended_action'].upper()}")
+    print(f"{Fore.WHITE}Reasoning: {Fore.CYAN}{result['reasoning']}")
+    
+    print(f"\n{Fore.YELLOW}📈 ANALYSIS:")
+    print(f"{Fore.WHITE}Hand Strength: {Fore.MAGENTA}{result['hand_strength']:.2%}")
+    print(f"{Fore.WHITE}Hand Type: {Fore.MAGENTA}{result['hand_type']}")
+    print(f"{Fore.WHITE}Position Strategy: {Fore.BLUE}{result['position_strategy']}")
+    print(f"{Fore.WHITE}Opponent Tendency: {Fore.RED}{result['opponent_tendency']}")
+    
+    print(f"\n{Fore.GREEN}{'='*60}\n")
         
-        print(f"\n{Fore.YELLOW}🎯 RECOMMENDATION:")
-        print(f"{Fore.WHITE}Action: {Fore.GREEN}{result['recommended_action'].upper()}")
-        print(f"{Fore.WHITE}Reasoning: {Fore.CYAN}{result['reasoning']}")
-        
-        print(f"\n{Fore.YELLOW}📈 ANALYSIS:")
-        print(f"{Fore.WHITE}Hand Strength: {Fore.MAGENTA}{result['hand_strength']:.2%}")
-        print(f"{Fore.WHITE}Hand Type: {Fore.MAGENTA}{result['hand_type']}")
-        print(f"{Fore.WHITE}Position Strategy: {Fore.BLUE}{result['position_strategy']}")
-        print(f"{Fore.WHITE}Opponent Tendency: {Fore.RED}{result['opponent_tendency']}")
-        
-        print(f"\n{Fore.GREEN}{'='*60}\n")
-        
-        # Add situational advice
-        provide_situation_advice(
-            hand=hand,
-            position=position,
-            pot_size=pot_size,
-            stack_size=stack_size,
-            opponent_stack=opponent_stack,
-            game_type=game_type,
-            opponent_tendency=opponent_history
-        )
-        
-        # Ask to continue
-        if not get_continue_choice():
-            print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
-            break
+    # Add situational advice
+    provide_situation_advice(
+        hand=hand,
+        position=position,
+        pot_size=pot_size,
+        stack_size=stack_size,
+        opponent_stack=opponent_stack,
+        game_type=game_type,
+        opponent_tendency=opponent_history
+    )
+    
+    # Ask to continue
+    if not get_continue_choice():
+        print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
+        break
 
 if __name__ == "__main__":
     main()
