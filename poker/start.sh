@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Function to check requirements in background
+check_requirements_background() {
+    check_requirements > /dev/null 2>&1
+    echo "REQUIREMENTS_DONE" > /tmp/requirements_status
+}
+
 # Function to check if a Python package is installed
 check_package() {
     # Use pip to check if package is installed
@@ -75,12 +81,18 @@ check_requirements() {
 # Main execution
 echo "🎲 Starting Poker Bot..."
 
-# Check and install requirements
+# Start requirements check in background
 echo "🔍 Checking system requirements..."
-check_requirements
+check_requirements_background &
 
-# Display AI initialization
+# Display AI initialization while requirements are checking
 display_ai_initialization
+
+# Wait for requirements check to complete
+while [ ! -f /tmp/requirements_status ]; do
+    sleep 0.1
+done
+rm /tmp/requirements_status
 
 # Change to the poker_bot directory
 cd poker_bot/src/poker_bot

@@ -76,14 +76,24 @@ class PokerEvaluator(dspy.Evaluate):
         results = {metric: 0.0 for metric in self.metrics}
         
         for game in eval_data:
-            prediction = model(game)
+            # Unpack game state to match agent's forward method
+            action, reasoning = model(
+                hand=game['hand'],
+                table_cards=game['table_cards'],
+                position=game['position'],
+                pot_size=game['pot_size'],
+                stack_size=game['stack_size'],
+                opponent_stack=game['opponent_stack'],
+                game_type=game['game_type'],
+                opponent_tendency=game['opponent_tendency']
+            )
             
             # Calculate various metrics
-            results["win_rate"] += self.calculate_win_rate(prediction, game)
-            results["expected_value"] += self.calculate_ev(prediction, game)
-            results["decision_quality"] += self.evaluate_decision_quality(prediction, game)
-            results["bluff_efficiency"] += self.evaluate_bluff_efficiency(prediction, game)
-            
+            results["win_rate"] += self.calculate_win_rate(action, game)
+            results["expected_value"] += self.calculate_ev(action, game)
+            results["decision_quality"] += self.evaluate_decision_quality(action, game)
+            results["bluff_efficiency"] += self.evaluate_bluff_efficiency(action, game)
+        
         # Average the results
         for metric in results:
             results[metric] /= len(eval_data)
@@ -184,18 +194,19 @@ class PokerTrainer:
 
     def prepare_training_data(self):
         """Prepare real training data"""
-        # This should load/generate actual poker hands and situations
         train_data = []
         valid_data = []
         
-        # Example data structure
+        # Example data structure matching the agent's forward method signature
         game_state = {
-            "hand": ["Ah", "Kh"],
-            "table": ["Qh", "Jh", "2c"],
-            "pot_size": 1000,
-            "position": "BTN",
-            "optimal_action": "raise",
-            "reasoning": "Flush draw with overcards"
+            'hand': "AH KH",
+            'table_cards': "QH JH 2C",
+            'position': "BTN",
+            'pot_size': 1000.0,
+            'stack_size': 2000.0,
+            'opponent_stack': 2000.0,
+            'game_type': "cash",
+            'opponent_tendency': "aggressive"
         }
         
         # Add more varied game states
