@@ -252,9 +252,20 @@ def handle_command(command):
         from poker_bot.trainer import PokerTrainer, TrainingConfig
         print(f"\n{Fore.YELLOW}Starting new training session...")
         trainer = PokerTrainer()
-        config = TrainingConfig(num_epochs=10, batch_size=32)
+            
+        # Prompt user for initial parameters with defaults
+        num_epochs_input = input(f"{Fore.CYAN}Enter number of epochs [{Style.RESET_ALL}100{Fore.CYAN}]: {Style.RESET_ALL}")
+        num_epochs = int(num_epochs_input.strip()) if num_epochs_input.strip() else 100
+
+        batch_size_input = input(f"{Fore.CYAN}Enter batch size [{Style.RESET_ALL}32{Fore.CYAN}]: {Style.RESET_ALL}")
+        batch_size = int(batch_size_input.strip()) if batch_size_input.strip() else 32
+
+        learning_rate_input = input(f"{Fore.CYAN}Enter learning rate [{Style.RESET_ALL}0.001{Fore.CYAN}]: {Style.RESET_ALL}")
+        learning_rate = float(learning_rate_input.strip()) if learning_rate_input.strip() else 0.001
+
+        config = TrainingConfig(num_epochs=num_epochs, batch_size=batch_size, learning_rate=learning_rate)
         results_dir = trainer.train(config)
-        
+
         print(f"\n{Fore.CYAN}Training complete! Results saved to: {results_dir}")
         print(f"\nNext steps:")
         print(f"1. 'tune' - Run hyperparameter tuning")
@@ -264,10 +275,33 @@ def handle_command(command):
     elif command == "tune":
         from poker_bot.trainer import PokerTrainer
         trainer = PokerTrainer()
-        results = trainer.tune_hyperparameters()
-        print(f"\n{Fore.YELLOW}Hyperparameter tuning complete. Best parameters: {results['params']}")
+            
+        # Prompt user for initial parameters with defaults
+        print(f"\n{Fore.YELLOW}Enter hyperparameter ranges for tuning (leave blank for defaults):")
+            
+        learning_rates_input = input(f"{Fore.CYAN}Learning rates (comma-separated) [{Style.RESET_ALL}0.001,0.01,0.1{Fore.CYAN}]: {Style.RESET_ALL}")
+        learning_rates = [float(lr.strip()) for lr in learning_rates_input.split(',')] if learning_rates_input.strip() else [0.001, 0.01, 0.1]
+            
+        batch_sizes_input = input(f"{Fore.CYAN}Batch sizes (comma-separated) [{Style.RESET_ALL}16,32,64{Fore.CYAN}]: {Style.RESET_ALL}")
+        batch_sizes = [int(bs.strip()) for bs in batch_sizes_input.split(',')] if batch_sizes_input.strip() else [16, 32, 64]
+            
+        temperatures_input = input(f"{Fore.CYAN}Temperatures (comma-separated) [{Style.RESET_ALL}0.5,0.7,0.9{Fore.CYAN}]: {Style.RESET_ALL}")
+        temperatures = [float(temp.strip()) for temp in temperatures_input.split(',')] if temperatures_input.strip() else [0.5, 0.7, 0.9]
+            
+        num_epochs_input = input(f"{Fore.CYAN}Number of epochs (comma-separated) [{Style.RESET_ALL}5,10{Fore.CYAN}]: {Style.RESET_ALL}")
+        num_epochs_list = [int(ne.strip()) for ne in num_epochs_input.split(',')] if num_epochs_input.strip() else [5, 10]
+            
+        param_grid = {
+            'learning_rate': learning_rates,
+            'batch_size': batch_sizes,
+            'temperature': temperatures,
+            'num_epochs': num_epochs_list
+        }
+            
+        results = trainer.tune_hyperparameters(param_grid)
+        print(f"\n{Fore.YELLOW}Hyperparameter tuning complete. Best parameters: {results['best_params']}")
         print(f"You may now 'train' with best parameters, 'play', or 'quit'.")
-        return False  # Return to avoid re-displaying the menu
+        return False
     elif command == "list-checkpoints":
         from poker_bot.trainer import PokerTrainer
         trainer = PokerTrainer()

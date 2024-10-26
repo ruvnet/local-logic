@@ -19,11 +19,13 @@ class HyperparameterTuner:
             {
                 'learning_rate': lr,
                 'batch_size': bs,
-                'temperature': temp
+                'temperature': temp,
+                'num_epochs': ne
             }
             for lr in param_grid['learning_rate']
             for bs in param_grid['batch_size']
             for temp in param_grid['temperature']
+            for ne in param_grid.get('num_epochs', [5])
         ]
         
         results = {
@@ -105,7 +107,8 @@ class HyperparameterTuner:
     def _evaluate_parameters(self, model, train_data, valid_data, params):
         """Evaluate a parameter combination"""
         # Train for a few epochs
-        for _ in range(3):  # Quick evaluation with 3 epochs
+        num_epochs = params.get('num_epochs', 3)
+        for _ in range(num_epochs):
             for i in range(0, len(train_data), params['batch_size']):
                 batch = train_data[i:i + params['batch_size']]
                 # Train on batch

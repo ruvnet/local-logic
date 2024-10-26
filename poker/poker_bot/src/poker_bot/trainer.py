@@ -181,7 +181,7 @@ class PokerTrainer:
             return True
         return False
 
-    def tune_hyperparameters(self):
+    def tune_hyperparameters(self, param_grid):
         """Run hyperparameter tuning"""
         print(f"\n{Fore.YELLOW}Starting hyperparameter tuning...")
         print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
