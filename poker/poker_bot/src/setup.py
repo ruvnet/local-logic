@@ -9,5 +9,6 @@ setup(
         "pandas",  # For data manipulation
         "treys",  # For poker hand evaluation
         "pytest",  # For testing
+        "dspy",   # For DSPy functionality
     ],
 )
