@@ -256,32 +256,39 @@ class PokerTrainer:
         """Train the model with comprehensive result tracking"""
         if config:
             self.config = config
-        
+
+        # Initialize response cache once
+        if not hasattr(self, 'response_cache'):
+            self.response_cache = {}
+
         print(f"\n{Fore.YELLOW}Starting training with configuration:")
         print(f"Epochs: {self.config.num_epochs}")
         print(f"Batch size: {self.config.batch_size}")
         print(f"Learning rate: {self.config.learning_rate}")
         print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-        
+
         train_data, valid_data = self.prepare_training_data()
         early_stopping = EarlyStopping(
             patience=self.config.patience,
             min_delta=self.config.min_delta
         )
-        
+
         history = []
         best_metric = float('-inf')
         training_start = time.time()
-        
+
         for epoch in tqdm(range(self.config.num_epochs), desc="Epochs"):
-            if self.config.shuffle_data:
-                random.shuffle(train_data)
-                
-            train_metrics = self._train_epoch(train_data)
-            
+            # For the first epoch, cache LLM responses
+            if epoch == 0:
+                self._train_epoch(train_data)
+            else:
+                # Use local model for subsequent epochs
+                self.agent.use_local_model = True
+                self._train_epoch(train_data)
+
             if epoch % self.config.validation_interval == 0:
                 valid_metrics = self.evaluator.evaluate(self.agent, valid_data)
-                
+
                 metrics = {
                     'epoch': epoch + 1,
                     'train_metrics': train_metrics,
@@ -289,33 +296,33 @@ class PokerTrainer:
                     'timestamp': time.strftime("%Y-%m-%d %H:%M:%S")
                 }
                 history.append(metrics)
-                
+
                 if valid_metrics['win_rate'] > best_metric:
                     best_metric = valid_metrics['win_rate']
                     self._save_checkpoint(epoch, valid_metrics)
-                
+
                 if early_stopping(1.0 - valid_metrics['win_rate']):
                     print(f"\n{Fore.YELLOW}Early stopping triggered at epoch {epoch}")
                     break
-                
+
                 self._display_metrics(metrics)
-        
+
         training_duration = time.time() - training_start
-        
+
         summary = {
             'training_duration': f"{training_duration:.2f} seconds",
             'early_stopping_triggered': early_stopping.early_stop,
             'best_win_rate': best_metric,
             'final_epoch': len(history)
         }
-        
+
         results_dir = self.save_training_results(
             history=history,
             final_metrics=valid_metrics,
             config=self.config,
             summary=summary
         )
-        
+
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
