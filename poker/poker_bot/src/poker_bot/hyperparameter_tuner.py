@@ -265,10 +265,16 @@ class HyperparameterTuner:
         # Identify best parameters
         best_result = max(results, key=lambda x: x['score'])
         
+        final_results = {
+            'all_results': results,
+            'best_params': best_result['params'],
+            'best_score': best_result['score']
+        }
+        
         # Save all tuning results to folder
         tuning_results_path = os.path.join(self.results_dir, 'tuning_results.json')
         with open(tuning_results_path, 'w') as f:
-            json.dump(results, f, indent=2)
+            json.dump(final_results, f, indent=2)
         
         # Save best parameters separately
         best_params_path = os.path.join(self.results_dir, 'best_params.json')
@@ -276,7 +282,7 @@ class HyperparameterTuner:
             json.dump(best_result, f, indent=2)
         
         print(f"Hyperparameter tuning complete. Best parameters saved to {best_params_path}")
-        return best_result
+        return final_results
 
     def plot_results(self, results):
         """Plot tuning results"""
@@ -288,9 +294,9 @@ class HyperparameterTuner:
             plt.figure(figsize=(10, 6))
             
             # Extract scores and parameters
-            scores = [r['score'] for r in results['scores']]
+            scores = [r['score'] for r in results['all_results']]
             params = [f"lr={r['params']['learning_rate']}\nb={r['params']['batch_size']}" 
-                     for r in results['scores']]
+                     for r in results['all_results']]
             
             # Create bar plot
             plt.bar(range(len(scores)), scores)

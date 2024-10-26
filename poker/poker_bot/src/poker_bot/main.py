@@ -298,9 +298,14 @@ def handle_command(command):
             'num_epochs': num_epochs_list
         }
             
-        results = trainer.tune_hyperparameters(param_grid)
-        print(f"\n{Fore.YELLOW}Hyperparameter tuning complete. Best parameters: {results['best_params']}")
-        print(f"You may now 'train' with best parameters, 'play', or 'quit'.")
+        try:
+            results = trainer.tune_hyperparameters(param_grid)
+            print(f"\n{Fore.YELLOW}Hyperparameter tuning complete.")
+            print(f"Best parameters: {results['best_params']}")
+            print(f"Best score: {results['best_score']:.3f}")
+            print(f"\nYou may now 'train' with best parameters, 'play', or 'quit'.")
+        except Exception as e:
+            print(f"\n{Fore.RED}Error during hyperparameter tuning: {str(e)}{Style.RESET_ALL}")
         return False
     elif command == "list-checkpoints":
         from poker_bot.trainer import PokerTrainer
