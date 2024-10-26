@@ -15,8 +15,10 @@ RUN apt-get update && apt-get install -y \
     scrot \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Open Interpreter with OS dependencies
+# Copy requirements first for better caching
+COPY requirements.txt .
 RUN python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r requirements.txt && \
     python -m pip install --no-cache-dir "open-interpreter[os]"
 
 # Create non-root user
@@ -27,3 +29,11 @@ WORKDIR /home/user
 # Set environment variables
 ENV DISPLAY=:0
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=utf-8
+ENV LANG=C.UTF-8
+
+# Create an entrypoint script
+COPY --chown=user:user entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh"]
