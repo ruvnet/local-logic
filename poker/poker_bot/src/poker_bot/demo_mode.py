@@ -6,6 +6,8 @@ import time
 class DemoMode:
     def __init__(self):
         self.poker_assistant = PokerAssistant()
+        self.positions = ['BTN', 'SB', 'BB', 'UTG', 'MP', 'CO']
+        self.stack_sizes = [1000, 1500, 2000, 2500, 3000]
         
         # Add evaluation methods
         def _evaluate_decision(self, decision, scenario, opponent_style):
@@ -100,8 +102,8 @@ class DemoMode:
         stack_sizes = [1000, 1500, 2000, 2500, 3000]
         
         for _ in range(num_scenarios):
-            position = random.choice(positions)
-            stack_size = random.choice(stack_sizes)
+            position = random.choice(self.positions)
+            stack_size = random.choice(self.stack_sizes)
             pot_size = random.randint(100, int(stack_size/2))
             
             hand = self.generate_random_hand()
@@ -171,7 +173,7 @@ class DemoMode:
             # Simulate outcome based on opponent skill and decision quality
             decision_quality = random.random()
             if decision_quality > opponent['skill_rating']:
-                wins += 1
+                results['wins'] += 1
                 outcome = f"{Fore.GREEN}Won"
             else:
                 outcome = f"{Fore.RED}Lost"
