@@ -19,6 +19,9 @@ check_requirements() {
     # Activate virtual environment
     source venv/bin/activate
     
+    # Set PYTHONPATH to include the src directory
+    export PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH"
+    
     # Install the poker_bot package and its dependencies if not already installed
     if ! check_package poker_bot; then
         echo "Installing poker_bot package and dependencies..."
@@ -49,7 +52,7 @@ cd poker_bot/src/poker_bot
 
 # Run the main application
 echo "Launching Poker Bot..."
-python main.py
+PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH" python main.py
 
 # Deactivate virtual environment when done
 deactivate
