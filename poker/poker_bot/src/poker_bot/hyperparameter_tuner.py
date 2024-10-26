@@ -1,3 +1,4 @@
+import dspy
 from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import seaborn as sns
