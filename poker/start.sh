@@ -2,9 +2,12 @@
 
 # Function to check if a Python package is installed
 check_package() {
-    # Use the Python from virtual environment
-    ./venv/bin/python -c "import $1" 2>/dev/null
-    return $?
+    # Use pip to check if package is installed
+    if ./venv/bin/pip show "$1" >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 # Function to check and install requirements
