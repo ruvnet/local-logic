@@ -372,7 +372,7 @@ class PokerTrainer:
             num_batches += 1
 
         # Train local model using DSPy fine-tuning
-        self.agent.fine_tune(inputs, targets)
+        self.agent.finetune(inputs, targets)
 
         # Optionally, compute metrics using local model predictions
         for input_data, target in zip(inputs, targets):

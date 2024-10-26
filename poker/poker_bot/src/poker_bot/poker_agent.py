@@ -68,9 +68,9 @@ class PokerAgent(dspy.Module):
         prediction = self.signature(**input_data)
         return prediction.action, prediction.reasoning
 
-    def fine_tune(self, inputs, targets):
+    def finetune(self, inputs, targets):
         # Use DSPy's fine-tuning capabilities to train a local model
-        self.local_model = dspy.fine_tune(self.signature, inputs, targets)
+        self.local_model = dspy.finetune(self.signature, inputs, targets)
 
     def local_model_predict(self, input_data):
         # Predict using the fine-tuned local model
