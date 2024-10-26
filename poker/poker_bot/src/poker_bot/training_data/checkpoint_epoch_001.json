@@ -1,10 +1,10 @@
 {
   "epoch": 1,
   "metrics": {
-    "win_rate": 0.75,
-    "expected_value": 0.5,
-    "decision_quality": 0.8,
-    "bluff_efficiency": 0.6
+    "win_rate": 0.0,
+    "expected_value": 0.0,
+    "decision_quality": 1.0,
+    "bluff_efficiency": 1.0
   },
   "model_state": {
     "signature": {

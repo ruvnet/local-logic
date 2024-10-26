@@ -6,10 +6,10 @@
     "temperature": 0.5
   },
   "metrics": {
-    "win_rate": 0.75,
-    "expected_value": 0.5,
-    "decision_quality": 0.8000000000000003,
-    "bluff_efficiency": 0.5999999999999998
+    "win_rate": 0.0,
+    "expected_value": 0.0,
+    "decision_quality": 1.0,
+    "bluff_efficiency": 1.0
   },
-  "score": 0.75
+  "score": 0.0
 }
