@@ -186,6 +186,7 @@ def print_help_menu():
     
     print(f"\n{Fore.CYAN}4. Training")
     print(f"{Fore.WHITE}   train              - Start new training session")
+    print(f"{Fore.WHITE}   tune               - Run hyperparameter tuning")
     print(f"{Fore.WHITE}   load-checkpoint    - Load a previous checkpoint")
     print(f"{Fore.WHITE}   list-checkpoints   - Show available checkpoints")
     print(f"{Fore.WHITE}   training-history   - Show training history")
@@ -223,6 +224,11 @@ def handle_command(command):
         print(f"\n{Fore.YELLOW}Starting new training session...")
         trainer = PokerTrainer()
         trainer.train(num_epochs=10, batch_size=32)
+        return True
+    elif command == "tune":
+        from poker_bot.trainer import PokerTrainer
+        trainer = PokerTrainer()
+        trainer.tune_hyperparameters()
         return True
     elif command == "list-checkpoints":
         from poker_bot.trainer import PokerTrainer
