@@ -385,21 +385,6 @@ class PokerTrainer:
             total_metrics[metric] /= (num_batches * self.config.batch_size)
 
         return total_metrics
-                
-                # Calculate metrics using real poker math
-                metrics = self._calculate_real_metrics(prediction, game_state)
-                
-                # Accumulate metrics
-                for metric, value in metrics.items():
-                    total_metrics[metric] += value
-                    
-            num_batches += 1
-            
-        # Average metrics
-        for metric in total_metrics:
-            total_metrics[metric] /= (num_batches * self.config.batch_size)
-            
-        return total_metrics
     
     def _convert_to_treys_format(self, card_str):
         """Convert card string to Treys format"""
