@@ -121,6 +121,20 @@ class DemoMode:
         
         return scenarios
     
+    def generate_random_hand(self):
+        """Generate a random 2-card poker hand"""
+        ranks = '23456789TJQKA'
+        suits = 'HDCS'
+        cards = []
+        
+        # Generate two unique cards
+        while len(cards) < 2:
+            card = random.choice(ranks) + random.choice(suits)
+            if card not in cards:  # Ensure no duplicate cards
+                cards.append(card)
+                
+        return ' '.join(cards)  # Return in format like "AH KD"
+    
     def generate_random_community_cards(self, num_cards):
         ranks = '23456789TJQKA'
         suits = 'HDCS'
