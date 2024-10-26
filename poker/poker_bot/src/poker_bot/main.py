@@ -220,10 +220,11 @@ def handle_command(command):
         demo.simulate_game(opponent_level=level)
         return True
     elif command == "train":
-        from poker_bot.trainer import PokerTrainer
+        from poker_bot.trainer import PokerTrainer, TrainingConfig
         print(f"\n{Fore.YELLOW}Starting new training session...")
         trainer = PokerTrainer()
-        trainer.train(num_epochs=10, batch_size=32)
+        config = TrainingConfig(num_epochs=10, batch_size=32)  # Create config object
+        trainer.train(config)  # Pass config object
         return True
     elif command == "tune":
         from poker_bot.trainer import PokerTrainer

@@ -10,6 +10,33 @@ check_package() {
     fi
 }
 
+display_ai_initialization() {
+    echo -e "\n🤖 Initializing Poker AI System..."
+    sleep 0.5
+    
+    # Simulated AI initialization steps
+    steps=(
+        "Loading neural network architectures..."
+        "Calibrating decision matrices..."
+        "Initializing hand strength evaluator..."
+        "Loading opponent modeling system..."
+        "Optimizing position-based strategies..."
+        "Configuring GPT-4 language model..."
+        "Validating game theory optimal solutions..."
+        "Preparing real-time analysis engine..."
+        "Initializing bankroll management system..."
+        "Calibrating risk assessment modules..."
+    )
+    
+    for step in "${steps[@]}"; do
+        echo -ne "⚡ $step\r"
+        sleep 0.3
+        echo -e "✅ $step"
+    done
+    
+    echo -e "\n🎮 AI System Ready!"
+}
+
 # Function to check and install requirements
 check_requirements() {
     echo "Checking requirements..."
@@ -46,10 +73,14 @@ check_requirements() {
 }
 
 # Main execution
-echo "Starting Poker Bot..."
+echo "🎲 Starting Poker Bot..."
 
 # Check and install requirements
+echo "🔍 Checking system requirements..."
 check_requirements
+
+# Display AI initialization
+display_ai_initialization
 
 # Change to the poker_bot directory
 cd poker_bot/src/poker_bot
