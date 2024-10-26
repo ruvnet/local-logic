@@ -69,51 +69,42 @@ class PokerAgent(dspy.Module):
         return prediction.action, prediction.reasoning
 
     def finetune(self, inputs, targets):
-        """Train the model using DSPy's predictor"""
+        """Train the model on examples"""
         try:
-            # Create a predictor for poker decisions
-            predictor = dspy.Predict(self.signature)
-            
-            # Store training examples
+            # Store examples for future predictions
             self.training_examples = []
-            
-            # Process each example
             for input_data, target in zip(inputs, targets):
-                try:
-                    # Format example for DSPy
-                    example = {
-                        'input': input_data,
-                        'output': {
-                            'action': target['action'],
-                            'reasoning': target['reasoning']
-                        }
+                self.training_examples.append({
+                    'input': input_data,
+                    'target': {
+                        'action': target['action'],
+                        'reasoning': target['reasoning']
                     }
-                    self.training_examples.append(example)
-                    
-                    # Train predictor on this example
-                    predictor.train(**example)
-                    
-                except Exception as e:
-                    print(f"Error processing example: {str(e)}")
-                    continue
+                })
             
-            # Store trained predictor
-            self.predictor = predictor
+            # Initialize predictor if needed
+            if not hasattr(self, 'predictor'):
+                self.predictor = dspy.Predict(self.signature)
+            
             self.use_local_model = True
             return True
-            
         except Exception as e:
             print(f"Finetune error: {str(e)}")
             return False
 
     def local_model_predict(self, input_data):
-        """Predict using trained DSPy predictor"""
+        """Predict using stored examples"""
         try:
-            if hasattr(self, 'predictor'):
-                prediction = self.predictor(input=input_data)
-                return prediction.action, prediction.reasoning
-            else:
+            if not hasattr(self, 'training_examples') or not self.training_examples:
                 return self.query_llm(input_data)
+                
+            # Use most recent example as prediction
+            latest_example = self.training_examples[-1]
+            return (
+                latest_example['target']['action'],
+                latest_example['target']['reasoning']
+            )
+            
         except Exception as e:
             print(f"Local prediction error: {str(e)}")
             return self.query_llm(input_data)

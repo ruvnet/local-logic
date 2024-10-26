@@ -713,9 +713,15 @@ class PokerTrainer:
         }
 
     def _calculate_stage_metrics(self, stage_history):
-        """Calculate average metrics for a training stage"""
+        """Calculate average metrics for a training stage with safety checks"""
         metrics = {}
+        if not stage_history:  # Handle empty stage
+            return {metric: 0.0 for metric in self.evaluator.metrics}
+            
         for metric in self.evaluator.metrics:
-            values = [epoch['train_metrics'][metric] for epoch in stage_history]
-            metrics[metric] = sum(values) / len(values)
+            try:
+                values = [epoch['train_metrics'][metric] for epoch in stage_history]
+                metrics[metric] = sum(values) / len(values) if values else 0.0
+            except (KeyError, ZeroDivisionError):
+                metrics[metric] = 0.0
         return metrics
