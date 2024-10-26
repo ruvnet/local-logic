@@ -16,6 +16,13 @@ RUN apt-get update && apt-get install -y \
     fluxbox \
     wget \
     curl \
+    xauth \
+    x11-xserver-utils \
+    xdg-utils \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages
