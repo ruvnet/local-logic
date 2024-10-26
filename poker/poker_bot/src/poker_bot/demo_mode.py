@@ -142,8 +142,7 @@ class DemoMode:
             'scenario_performance': {}
         }
         
-        wins = 0
-        for hand_num in range(num_hands):
+        for hand_num, scenario in enumerate(scenarios, 1):
             print(f"\n{Fore.GREEN}{'='*60}")
             print(f"{Fore.YELLOW}Demo Hand #{hand_num + 1}")
             print(f"{Fore.GREEN}{'='*60}\n")
