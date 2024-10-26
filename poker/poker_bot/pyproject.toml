@@ -16,7 +16,7 @@ dependencies = [
     "pandas",
     "treys",
     "pytest",
-    "dspy-ai",
+    "dspy-ai[all]",
     "scikit-learn",
     "colorama",
     "matplotlib",

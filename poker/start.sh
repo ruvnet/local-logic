@@ -59,8 +59,11 @@ check_requirements() {
     # Upgrade pip first
     pip install --upgrade pip >/dev/null 2>&1
     
-    # Install dspy-ai specifically (this is the correct package name)
-    pip install dspy-ai >/dev/null 2>&1
+    # Install dspy-ai with all dependencies
+    pip install "dspy-ai[all]" >/dev/null 2>&1
+    
+    # Additional step to ensure dspy is available
+    pip install --no-deps dspy >/dev/null 2>&1
     
     # Set PYTHONPATH to include the src directory
     export PYTHONPATH="/workspaces/agentic-desktop/poker/poker_bot/src:$PYTHONPATH"
@@ -79,7 +82,8 @@ check_requirements() {
         "pandas"
         "treys"
         "pytest"
-        "dspy-ai"
+        "dspy-ai[all]"
+        "dspy"
         "scikit-learn"
         "colorama"
         "matplotlib"
