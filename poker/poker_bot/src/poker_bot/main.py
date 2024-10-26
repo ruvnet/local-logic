@@ -252,10 +252,15 @@ def handle_command(command):
         from poker_bot.trainer import PokerTrainer, TrainingConfig
         print(f"\n{Fore.YELLOW}Starting new training session...")
         trainer = PokerTrainer()
-        config = TrainingConfig(num_epochs=10, batch_size=32)  # Create config object
-        trainer.train(config)  # Pass config object
-        print(f"\n{Fore.YELLOW}Training complete. You may choose to 'play', 'tune', or 'quit'.")
-        return False  # Return to avoid re-displaying the menu
+        config = TrainingConfig(num_epochs=10, batch_size=32)
+        results_dir = trainer.train(config)
+        
+        print(f"\n{Fore.CYAN}Training complete! Results saved to: {results_dir}")
+        print(f"\nNext steps:")
+        print(f"1. 'tune' - Run hyperparameter tuning")
+        print(f"2. 'play' - Test the trained model")
+        print(f"3. 'quit' - Exit the system")
+        return False
     elif command == "tune":
         from poker_bot.trainer import PokerTrainer
         trainer = PokerTrainer()

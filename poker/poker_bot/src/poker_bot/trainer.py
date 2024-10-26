@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import numpy as np
 from colorama import Fore, Style
 from tqdm import tqdm
@@ -252,64 +253,70 @@ class PokerTrainer:
         self._train_epoch(train_data)
 
     def train(self, config: TrainingConfig = None):
-        """Actual training implementation"""
+        """Train the model with comprehensive result tracking"""
         if config:
             self.config = config
-            
+        
         print(f"\n{Fore.YELLOW}Starting training with configuration:")
         print(f"Epochs: {self.config.num_epochs}")
         print(f"Batch size: {self.config.batch_size}")
         print(f"Learning rate: {self.config.learning_rate}")
         print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
         
-        # Prepare data
         train_data, valid_data = self.prepare_training_data()
-        
-        # Initialize early stopping
         early_stopping = EarlyStopping(
             patience=self.config.patience,
             min_delta=self.config.min_delta
         )
         
-        # Training loop
         history = []
         best_metric = float('-inf')
+        training_start = time.time()
         
         for epoch in tqdm(range(self.config.num_epochs), desc="Epochs"):
-            print(f"\nEpoch {epoch + 1}/{self.config.num_epochs}")
-            # Shuffle training data if enabled
             if self.config.shuffle_data:
                 random.shuffle(train_data)
-            # Train on batches
+                
             train_metrics = self._train_epoch(train_data)
             
-            # Validate
             if epoch % self.config.validation_interval == 0:
                 valid_metrics = self.evaluator.evaluate(self.agent, valid_data)
                 
-                # Save checkpoint if improved
+                metrics = {
+                    'epoch': epoch + 1,
+                    'train_metrics': train_metrics,
+                    'valid_metrics': valid_metrics,
+                    'timestamp': time.strftime("%Y-%m-%d %H:%M:%S")
+                }
+                history.append(metrics)
+                
                 if valid_metrics['win_rate'] > best_metric:
                     best_metric = valid_metrics['win_rate']
                     self._save_checkpoint(epoch, valid_metrics)
                 
-                # Check for early stopping
                 if early_stopping(1.0 - valid_metrics['win_rate']):
                     print(f"\n{Fore.YELLOW}Early stopping triggered at epoch {epoch}")
                     break
                 
-                # Record metrics
-                metrics = {
-                    'epoch': epoch + 1,
-                    'train_metrics': train_metrics,
-                    'valid_metrics': valid_metrics
-                }
-                history.append(metrics)
-                
-                # Display progress
                 self._display_metrics(metrics)
         
-        # Save final history
-        self._save_history(history)
+        training_duration = time.time() - training_start
+        
+        summary = {
+            'training_duration': f"{training_duration:.2f} seconds",
+            'early_stopping_triggered': early_stopping.early_stop,
+            'best_win_rate': best_metric,
+            'final_epoch': len(history)
+        }
+        
+        results_dir = self.save_training_results(
+            history=history,
+            final_metrics=valid_metrics,
+            config=self.config,
+            summary=summary
+        )
+        
+        return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
         """Train for one epoch with real data processing"""
@@ -591,3 +598,93 @@ class PokerTrainer:
         print(f"Validation Metrics:")
         for metric, value in metrics['valid_metrics'].items():
             print(f"  {metric}: {value:.2%}")
+
+    def save_training_results(self, history, final_metrics, config, summary):
+        """Save comprehensive training results and analysis"""
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        results_dir = os.path.join(os.path.dirname(__file__), 'training_results')
+        session_dir = os.path.join(results_dir, f'training_session_{timestamp}')
+        os.makedirs(session_dir, exist_ok=True)
+        
+        training_data = {
+            'config': vars(config),
+            'history': history,
+            'final_metrics': final_metrics,
+            'summary': summary,
+            'timestamp': timestamp
+        }
+        
+        with open(os.path.join(session_dir, 'training_results.json'), 'w') as f:
+            json.dump(training_data, f, indent=2)
+        
+        analysis = self._generate_analysis(history, final_metrics)
+        with open(os.path.join(session_dir, 'analysis.json'), 'w') as f:
+            json.dump(analysis, f, indent=2)
+        
+        report = (
+            f"\nTraining Session Summary ({timestamp})\n"
+            f"{'='*50}\n"
+            f"Duration: {analysis['duration']}\n"
+            f"Final Win Rate: {final_metrics['win_rate']:.2%}\n"
+            f"Best Epoch: {analysis['best_epoch']}\n"
+            f"Convergence Rate: {analysis['convergence_rate']:.2%}\n\n"
+            f"Key Metrics:\n"
+            f"- Decision Quality: {final_metrics['decision_quality']:.2%}\n"
+            f"- Bluff Efficiency: {final_metrics['bluff_efficiency']:.2%}\n"
+            f"- Expected Value: {final_metrics['expected_value']:.2%}\n\n"
+            f"Training Configuration:\n"
+            f"- Epochs: {config.num_epochs}\n"
+            f"- Batch Size: {config.batch_size}\n"
+            f"- Learning Rate: {config.learning_rate}\n"
+            f"- Temperature: {config.temperature}\n"
+        )
+        
+        with open(os.path.join(session_dir, 'summary.txt'), 'w') as f:
+            f.write(report)
+        
+        print(f"\n{Fore.GREEN}Training results saved to: {session_dir}")
+        print(f"{Fore.YELLOW}{report}{Style.RESET_ALL}")
+        
+        return session_dir
+
+    def _generate_analysis(self, history, final_metrics):
+        """Generate detailed analysis of training results"""
+        win_rates = [epoch['train_metrics']['win_rate'] for epoch in history]
+        
+        analysis = {
+            'duration': f"{len(history)} epochs",
+            'best_epoch': history.index(max(history, key=lambda x: x['train_metrics']['win_rate'])) + 1,
+            'convergence_rate': (win_rates[-1] - win_rates[0]) / len(history),
+            'metrics_progression': {
+                'win_rate': self._calculate_progression(history, 'win_rate'),
+                'decision_quality': self._calculate_progression(history, 'decision_quality'),
+                'bluff_efficiency': self._calculate_progression(history, 'bluff_efficiency'),
+                'expected_value': self._calculate_progression(history, 'expected_value')
+            },
+            'performance_summary': {
+                'early_stage': self._calculate_stage_metrics(history[:len(history)//3]),
+                'mid_stage': self._calculate_stage_metrics(history[len(history)//3:2*len(history)//3]),
+                'late_stage': self._calculate_stage_metrics(history[2*len(history)//3:])
+            }
+        }
+        
+        return analysis
+
+    def _calculate_progression(self, history, metric):
+        """Calculate progression of a specific metric"""
+        values = [epoch['train_metrics'][metric] for epoch in history]
+        return {
+            'start': values[0],
+            'end': values[-1],
+            'min': min(values),
+            'max': max(values),
+            'improvement': values[-1] - values[0]
+        }
+
+    def _calculate_stage_metrics(self, stage_history):
+        """Calculate average metrics for a training stage"""
+        metrics = {}
+        for metric in self.evaluator.metrics:
+            values = [epoch['train_metrics'][metric] for epoch in stage_history]
+            metrics[metric] = sum(values) / len(values)
+        return metrics
