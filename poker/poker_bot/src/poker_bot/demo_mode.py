@@ -6,6 +6,34 @@ import time
 class DemoMode:
     def __init__(self):
         self.poker_assistant = PokerAssistant()
+        
+        # Add evaluation methods
+        def _evaluate_decision(self, decision, scenario, opponent_style):
+            """Evaluate decision quality"""
+            eval_score = 0.0
+            
+            # Check position awareness
+            if scenario['position'] in decision['reasoning']:
+                eval_score += 0.2
+                
+            # Check opponent adaptation
+            if opponent_style.lower() in decision['reasoning'].lower():
+                eval_score += 0.2
+                
+            # Check hand strength consideration
+            if 'hand strength' in decision['reasoning'].lower():
+                eval_score += 0.2
+                
+            # Check pot odds awareness
+            if 'pot odds' in decision['reasoning'].lower():
+                eval_score += 0.2
+                
+            # Check stack size consideration
+            if 'stack' in decision['reasoning'].lower():
+                eval_score += 0.2
+                
+            return eval_score
+        
         self.opponent_types = {
             'beginner': {
                 'style': 'passive, calls too much, rarely bluffs, plays too many hands',
@@ -24,15 +52,72 @@ class DemoMode:
             }
         }
         
-    def generate_random_hand(self):
-        ranks = '23456789TJQKA'
-        suits = 'HDCS'
-        cards = []
-        while len(cards) < 2:
-            card = random.choice(ranks) + random.choice(suits)
-            if card not in cards:
-                cards.append(card)
-        return ' '.join(cards)
+    def _get_test_scenarios(self):
+        """Get predefined test scenarios"""
+        return [
+            {
+                'hand': "AH KH",
+                'table_cards': "QH JH 2C",
+                'position': "BTN",
+                'pot_size': 1000,
+                'stack_size': 2000,
+                'opponent_stack': 2000,
+                'scenario_type': "Flush Draw + Overcards"
+            },
+            {
+                'hand': "JC JD",
+                'table_cards': "AH KD QC",
+                'position': "MP",
+                'pot_size': 800,
+                'stack_size': 1500,
+                'opponent_stack': 1500,
+                'scenario_type': "Pocket Pair vs Overcard Board"
+            },
+            {
+                'hand': "7H 6H",
+                'table_cards': "",
+                'position': "CO",
+                'pot_size': 100,
+                'stack_size': 2000,
+                'opponent_stack': 2000,
+                'scenario_type': "Preflop Speculative Hand"
+            },
+            {
+                'hand': "AS KD",
+                'table_cards': "KH 7C 2D",
+                'position': "BB",
+                'pot_size': 600,
+                'stack_size': 1800,
+                'opponent_stack': 1600,
+                'scenario_type': "Top Pair Top Kicker"
+            }
+        ]
+
+    def _generate_random_scenarios(self, num_scenarios):
+        """Generate diverse random scenarios"""
+        scenarios = []
+        positions = ['BTN', 'SB', 'BB', 'UTG', 'MP', 'CO']
+        stack_sizes = [1000, 1500, 2000, 2500, 3000]
+        
+        for _ in range(num_scenarios):
+            position = random.choice(positions)
+            stack_size = random.choice(stack_sizes)
+            pot_size = random.randint(100, int(stack_size/2))
+            
+            hand = self.generate_random_hand()
+            table_cards = self.generate_random_community_cards(random.choice([0, 3, 4, 5]))
+            
+            scenarios.append({
+                'hand': hand,
+                'table_cards': table_cards,
+                'position': position,
+                'pot_size': pot_size,
+                'stack_size': stack_size,
+                'opponent_stack': stack_size * random.uniform(0.8, 1.2),
+                'scenario_type': "Random Scenario"
+            })
+        
+        return scenarios
     
     def generate_random_community_cards(self, num_cards):
         ranks = '23456789TJQKA'
@@ -44,13 +129,18 @@ class DemoMode:
                 cards.append(card)
         return ' '.join(cards)
     
-    def simulate_game(self, opponent_level='intermediate', num_hands=5):
+    def simulate_game(self, opponent_level='intermediate', num_hands=5, test_mode=False):
+        """Enhanced simulation with testing capabilities"""
         opponent = self.opponent_types[opponent_level]
         print(f"\n{Fore.YELLOW}Starting Demo Mode - Playing against {opponent_level.title()} Opponent")
         print(f"{Fore.CYAN}Opponent Style: {opponent['style']}")
         
-        positions = ['BTN', 'SB', 'BB', 'UTG', 'MP', 'CO']
-        stack_sizes = [1000, 1500, 2000, 2500, 3000]
+        scenarios = self._get_test_scenarios() if test_mode else self._generate_random_scenarios(num_hands)
+        results = {
+            'wins': 0,
+            'decisions': [],
+            'scenario_performance': {}
+        }
         
         wins = 0
         for hand_num in range(num_hands):
