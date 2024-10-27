@@ -526,8 +526,8 @@ class PokerTrainer:
         """Train for one epoch with efficient caching and local model training"""
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("train_epoch") as span:
-        total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
-        num_batches = 0
+            total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
+            num_batches = 0
 
         # Cache to store LLM responses
         if not hasattr(self, 'response_cache'):
