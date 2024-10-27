@@ -334,33 +334,6 @@ class PokerEvaluator(dspy.Evaluate):
 
 class PokerTrainer:
     def __init__(self):
-        if HAS_PHOENIX and HAS_OPENTELEMETRY:
-            # Initialize Phoenix tracing with correct endpoint
-            phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
-            phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
-            endpoint = f"http://{phoenix_host}:{phoenix_port}"
-        
-            print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
-        
-            try:
-                # Register with correct parameters
-                tracer_provider = register(
-                    project_name="poker-bot",
-                    endpoint=endpoint
-                )
-            
-                # Initialize instrumentors if available
-                try:
-                    from openinference.instrumentation.dspy import DSPyInstrumentor
-                    from openinference.instrumentation.litellm import LiteLLMInstrumentor
-                    DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
-                    LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
-                except ImportError:
-                    print("Warning: OpenInference instrumentors not available")
-            except Exception as e:
-                print(f"Error initializing Phoenix tracing: {str(e)}")
-                print("Continuing without tracing...")
-        
         # Configure DSPy to use GPT-4-mini
         dspy.configure(
             lm='gpt-4-mini',
@@ -374,6 +347,37 @@ class PokerTrainer:
         self.tuner = HyperparameterTuner()
         self.evaluator = PokerEvaluator()
         self.config = TrainingConfig()
+        
+        # Initialize Phoenix tracing once
+        if HAS_PHOENIX and HAS_OPENTELEMETRY:
+            try:
+                phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
+                phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
+                endpoint = f"http://{phoenix_host}:{phoenix_port}"
+                
+                print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
+                
+                # Only initialize if no TracerProvider exists
+                if not trace.get_tracer_provider():
+                    tracer_provider = register(
+                        project_name="poker-bot",
+                        endpoint=endpoint
+                    )
+                    
+                    # Initialize instrumentors only once
+                    if not hasattr(self, '_instrumentors_initialized'):
+                        try:
+                            from openinference.instrumentation.dspy import DSPyInstrumentor
+                            from openinference.instrumentation.litellm import LiteLLMInstrumentor
+                            DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
+                            LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
+                            self._instrumentors_initialized = True
+                        except ImportError:
+                            print("Warning: OpenInference instrumentors not available")
+                
+            except Exception as e:
+                print(f"Error initializing Phoenix tracing: {str(e)}")
+                print("Continuing without tracing...")
         
     def list_checkpoints(self):
         """List all available checkpoints"""
