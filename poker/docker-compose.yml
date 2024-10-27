@@ -27,4 +27,6 @@ services:
         condition: service_healthy
     volumes:
       - ./poker_bot/src/poker_bot:/app/poker_bot
-    command: ["python", "-m", "poker_bot.main"]
+    stdin_open: true  # Keep STDIN open
+    tty: true        # Allocate a pseudo-TTY
+    command: ["/app/start.sh"]
