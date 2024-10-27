@@ -381,40 +381,55 @@ class PokerTrainer:
         self.evaluator = PokerEvaluator()
         self.config = TrainingConfig()
         
-        # Initialize Phoenix tracing
-        from phoenix_config import init_phoenix
-        self.tracer_provider = init_phoenix()
+        # Initialize Phoenix optimization configuration
+        self.optimization_config = {
+            'metrics': ['win_rate', 'decision_quality', 'expected_value'],
+            'parameters': {
+                'learning_rate': (0.0001, 0.1),
+                'batch_size': (16, 128),
+                'temperature': (0.1, 1.0)
+            }
+        }
         
-        # Initialize Phoenix tracing once
-        if HAS_PHOENIX and HAS_OPENTELEMETRY:
-            try:
-                phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
-                phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
-                endpoint = f"http://{phoenix_host}:{phoenix_port}"
-                
-                print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
-                
-                # Only initialize if no TracerProvider exists
-                if not trace.get_tracer_provider():
-                    tracer_provider = register(
-                        project_name="poker-bot",
-                        endpoint=endpoint
-                    )
-                    
-                    # Initialize instrumentors only once
-                    if not hasattr(self, '_instrumentors_initialized'):
-                        try:
-                            from openinference.instrumentation.dspy import DSPyInstrumentor
-                            from openinference.instrumentation.litellm import LiteLLMInstrumentor
-                            DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
-                            LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
-                            self._instrumentors_initialized = True
-                        except ImportError:
-                            print("Warning: OpenInference instrumentors not available")
-                
-            except Exception as e:
-                print(f"Error initializing Phoenix tracing: {str(e)}")
-                print("Continuing without tracing...")
+        # Initialize Phoenix tracing with optimization
+        self.tracer_provider = self._init_phoenix()
+        
+    def _init_phoenix(self):
+        """Initialize Phoenix with optimization capabilities"""
+        if not (HAS_PHOENIX and HAS_OPENTELEMETRY):
+            print("Phoenix or OpenTelemetry not available")
+            return None
+            
+        try:
+            phoenix_host = os.getenv('PHOENIX_HOST', 'localhost')
+            phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
+            endpoint = f"http://{phoenix_host}:{phoenix_port}"
+            
+            print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
+            
+            # Register tracer provider
+            tracer_provider = register(
+                project_name="poker-bot",
+                endpoint=endpoint
+            )
+            
+            # Initialize instrumentors
+            if not hasattr(self, '_instrumentors_initialized'):
+                try:
+                    from openinference.instrumentation.dspy import DSPyInstrumentor
+                    from openinference.instrumentation.litellm import LiteLLMInstrumentor
+                    DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
+                    LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
+                    self._instrumentors_initialized = True
+                except ImportError:
+                    print("Warning: OpenInference instrumentors not available")
+            
+            print("Phoenix optimization initialized successfully")
+            return tracer_provider
+            
+        except Exception as e:
+            print(f"Phoenix optimization initialization error: {str(e)}")
+            return None
         
     def list_checkpoints(self):
         """List all available checkpoints"""
@@ -532,7 +547,7 @@ class PokerTrainer:
         self._train_epoch(train_data)
 
     def train(self, config: TrainingConfig = None):
-        """Train the model with comprehensive result tracking"""
+        """Train the model with comprehensive result tracking and optimization"""
         if config:
             self.config = config
             
@@ -543,6 +558,13 @@ class PokerTrainer:
             span.set_attribute("num_epochs", self.config.num_epochs)
             span.set_attribute("batch_size", self.config.batch_size)
             span.set_attribute("learning_rate", self.config.learning_rate)
+            
+            # Initialize optimization tracking
+            if self.tracer_provider:
+                span.set_attribute("optimization_enabled", True)
+                span.set_attribute("optimization_config", str(self.optimization_config))
+            else:
+                span.set_attribute("optimization_enabled", False)
         if config:
             self.config = config
 
@@ -616,9 +638,16 @@ class PokerTrainer:
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch with efficient caching and local model training"""
+        """Train for one epoch with proper tracing and optimization"""
+        tracer = trace.get_tracer(__name__)
         total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
         num_batches = 0
+        
+        with tracer.start_as_current_span("train_epoch") as span:
+            # Log training parameters
+            span.set_attribute("batch_size", self.config.batch_size)
+            span.set_attribute("learning_rate", self.config.learning_rate)
+            span.set_attribute("temperature", self.config.temperature)
         
         # Initialize response cache if needed
         if not hasattr(self, 'response_cache'):
