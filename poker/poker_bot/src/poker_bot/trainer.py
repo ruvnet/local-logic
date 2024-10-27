@@ -350,14 +350,17 @@ class PokerTrainer:
                     insecure=True
                 )
             
-            # Initialize instrumentors if available
-            try:
-                from openinference.instrumentation.dspy import DSPyInstrumentor
-                from openinference.instrumentation.litellm import LiteLLMInstrumentor
-                DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
-                LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
-            except ImportError:
-                print("Warning: OpenInference instrumentors not available")
+                # Initialize instrumentors if available
+                try:
+                    from openinference.instrumentation.dspy import DSPyInstrumentor
+                    from openinference.instrumentation.litellm import LiteLLMInstrumentor
+                    DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
+                    LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
+                except ImportError:
+                    print("Warning: OpenInference instrumentors not available")
+            except Exception as e:
+                print(f"Error initializing Phoenix tracing: {str(e)}")
+                print("Continuing without tracing...")
         
         # Configure DSPy to use GPT-4-mini
         dspy.configure(
