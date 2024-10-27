@@ -5,11 +5,16 @@ services:
     ports:
       - "6006:6006"
       - "4317:4317"
+    volumes:
+      - phoenix_data:/data
+    networks:
+      - poker-net
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "6006"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:6006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
   poker_bot:
     container_name: poker_bot
@@ -26,6 +31,21 @@ services:
         condition: service_healthy
     volumes:
       - ./poker_bot/src/poker_bot:/app/poker_bot
-    stdin_open: true  # Keep STDIN open
-    tty: true        # Allocate a pseudo-TTY
-    command: ["/app/start.sh"]
+      - ./data:/app/data
+    networks:
+      - poker-net
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "/app/scripts/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["/app/scripts/start.sh"]
+
+networks:
+  poker-net:
+    driver: bridge
+
+volumes:
+  phoenix_data:

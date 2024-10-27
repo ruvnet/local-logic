@@ -67,9 +67,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 COPY --from=builder /app/poker_bot ./poker_bot
 
-# Copy scripts
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Copy scripts and config
+COPY scripts/ /app/scripts/
+COPY phoenix_config.py /app/phoenix_config.py
+RUN chmod +x /app/scripts/*.sh
 
 # Set ownership
 RUN chown -R poker:poker /app
