@@ -18,61 +18,60 @@ class HyperparameterTuner:
         # Use existing TracerProvider
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("hyperparameter_tuning") as span:
-
-        from sklearn.model_selection import GridSearchCV
+            from sklearn.model_selection import GridSearchCV
         
-        # Create parameter combinations
-        param_combinations = [
-            {
-                'learning_rate': lr,
-                'batch_size': bs,
-                'temperature': temp,
-                'num_epochs': ne
+            # Create parameter combinations
+            param_combinations = [
+                {
+                    'learning_rate': lr,
+                    'batch_size': bs,
+                    'temperature': temp,
+                    'num_epochs': ne
+                }
+                for lr in param_grid['learning_rate']
+                for bs in param_grid['batch_size']
+                for temp in param_grid['temperature']
+                for ne in param_grid.get('num_epochs', [5])
+            ]
+            
+            results = {
+                'scores': [],
+                'best_params': None,
+                'best_score': float('-inf')
             }
-            for lr in param_grid['learning_rate']
-            for bs in param_grid['batch_size']
-            for temp in param_grid['temperature']
-            for ne in param_grid.get('num_epochs', [5])
-        ]
         
-        results = {
-            'scores': [],
-            'best_params': None,
-            'best_score': float('-inf')
-        }
-        
-        # Test each combination
-        for params in param_combinations:
-            # Configure model with current parameters
-            dspy.configure(
-                lm='gpt-4',
-                temperature=params['temperature']
-            )
+            # Test each combination
+            for params in param_combinations:
+                # Configure model with current parameters
+                dspy.configure(
+                    lm='gpt-4',
+                    temperature=params['temperature']
+                )
+                
+                # Create fresh model instance
+                from poker_bot.poker_agent import PokerAgent
+                model = PokerAgent()
+                
+                # Train and evaluate
+                train_data, valid_data = self._generate_validation_data()
+                score = self._evaluate_parameters(model, train_data, valid_data, params)
+                
+                results['scores'].append({
+                    'params': params,
+                    'score': score
+                })
+                
+                # Update best parameters
+                if score > results['best_score']:
+                    results['best_score'] = score
+                    results['best_params'] = params
             
-            # Create fresh model instance
-            from poker_bot.poker_agent import PokerAgent
-            model = PokerAgent()
+            # Save results
+            results_path = os.path.join(self.results_dir, 'tuning_results.json')
+            with open(results_path, 'w') as f:
+                json.dump(results, f, indent=2)
             
-            # Train and evaluate
-            train_data, valid_data = self._generate_validation_data()
-            score = self._evaluate_parameters(model, train_data, valid_data, params)
-            
-            results['scores'].append({
-                'params': params,
-                'score': score
-            })
-            
-            # Update best parameters
-            if score > results['best_score']:
-                results['best_score'] = score
-                results['best_params'] = params
-        
-        # Save results
-        results_path = os.path.join(self.results_dir, 'tuning_results.json')
-        with open(results_path, 'w') as f:
-            json.dump(results, f, indent=2)
-        
-        return results
+            return results
 
     def _generate_validation_data(self):
         """Generate diverse poker scenarios for validation"""
