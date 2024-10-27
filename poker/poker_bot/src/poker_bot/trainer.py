@@ -175,7 +175,12 @@ class PokerEvaluator(dspy.Evaluate):
             metrics['decision_quality'] += decision_quality
             
             # Calculate bluff efficiency
-            bluff_efficiency = self.evaluate_bluff_efficiency((action, reasoning), game)
+            hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
+            bluff_efficiency = self.evaluate_bluff_efficiency(
+                action,
+                hand_strength,
+                game['opponent_tendency']
+            )
             metrics['bluff_efficiency'] += bluff_efficiency
 
         # Average the metrics
@@ -268,12 +273,8 @@ class PokerEvaluator(dspy.Evaluate):
             
         return 0.5
         
-    def evaluate_bluff_efficiency(self, prediction, game):
+    def evaluate_bluff_efficiency(self, action: str, hand_strength: float, opponent_tendency: str) -> float:
         """Evaluate bluffing efficiency"""
-        hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
-        opponent_tendency = game['opponent_tendency']
-        action = prediction[0]
-
         if action != 'raise' or hand_strength > 0.5:
             return 1.0  # Not a bluff
             
