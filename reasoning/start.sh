@@ -114,32 +114,81 @@ check_requirements() {
     fi
     
     source venv/bin/activate
-    
-    # Install core dependencies first
-    echo "Installing dependencies..."
-    pip install --upgrade pip wheel setuptools >/dev/null 2>&1
-    
-    # Install packages for reasoning system
-    pip install numpy pandas pytest scikit-learn colorama matplotlib \
-        seaborn openai networkx spacy nltk transformers torch \
-        tensorflow sympy >/dev/null 2>&1
-    
-    # Install additional NLP and reasoning packages if not already installed
-    if ! python -c "import spacy.cli" 2>/dev/null; then
+
+    # Function to check if a package is installed
+    package_installed() {
+        python -c "import $1" 2>/dev/null
+        return $?
+    }
+
+    # Function to check pip package version
+    pip_package_installed() {
+        pip show $1 >/dev/null 2>&1
+        return $?
+    }
+
+    # Only upgrade pip if version is old
+    if ! pip --version | grep -q "pip 2[3-9]"; then
+        echo "Upgrading pip..."
+        pip install --upgrade pip >/dev/null 2>&1
+    fi
+
+    # List of required packages with their import names
+    declare -A packages=(
+        ["numpy"]="numpy"
+        ["pandas"]="pandas"
+        ["pytest"]="pytest"
+        ["scikit-learn"]="sklearn"
+        ["colorama"]="colorama"
+        ["matplotlib"]="matplotlib"
+        ["seaborn"]="seaborn"
+        ["openai"]="openai"
+        ["networkx"]="networkx"
+        ["spacy"]="spacy"
+        ["nltk"]="nltk"
+        ["transformers"]="transformers"
+        ["torch"]="torch"
+        ["tensorflow"]="tensorflow"
+        ["sympy"]="sympy"
+    )
+
+    # Check and install missing packages
+    missing_packages=()
+    for pkg in "${!packages[@]}"; do
+        if ! package_installed "${packages[$pkg]}"; then
+            missing_packages+=("$pkg")
+        fi
+    done
+
+    # Install missing packages if any
+    if [ ${#missing_packages[@]} -ne 0 ]; then
+        echo "Installing missing packages: ${missing_packages[*]}"
+        pip install "${missing_packages[@]}" >/dev/null 2>&1
+    else
+        echo "All Python packages already installed"
+    fi
+
+    # Install additional NLP models only if not present
+    if package_installed "spacy" && ! python -c "import spacy; spacy.load('en_core_web_sm')" 2>/dev/null; then
+        echo "Installing spaCy English model..."
         python -m spacy download en_core_web_sm >/dev/null 2>&1
     fi
-    
-    if ! python -c "import nltk.data" 2>/dev/null; then
-        python -m nltk.downloader punkt averaged_perceptron_tagger wordnet >/dev/null 2>&1
+
+    if package_installed "nltk" && ! python -c "import nltk.data; nltk.data.find('tokenizers/punkt')" 2>/dev/null; then
+        echo "Installing NLTK data..."
+        python -m nltk.downloader -q punkt averaged_perceptron_tagger wordnet
     fi
-    
-    # Set PYTHONPATH to include the reasoning source directory
+
+    # Set PYTHONPATH
     export PYTHONPATH="${PWD}/reasoning/src:${PYTHONPATH}"
-    
-    # Install the package in development mode
-    cd reasoning/src
-    pip install -e . >/dev/null 2>&1
-    cd ../..
+
+    # Only install in development mode if not already installed
+    if ! pip_package_installed "reasoning-bot"; then
+        echo "Installing package in development mode..."
+        cd reasoning/src
+        pip install -e . >/dev/null 2>&1
+        cd ../..
+    fi
 }
 
 # Main execution
