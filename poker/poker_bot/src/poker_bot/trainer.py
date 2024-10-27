@@ -767,13 +767,13 @@ class PokerTrainer:
         return {
             'win_rate': win_rate,
             'expected_value': ev,
-            'decision_quality': self.evaluate_decision_quality(
+            'decision_quality': self.evaluator.evaluate_decision_quality(
                 prediction[0],  # action
                 hand_strength,
                 game_state['position'],
                 pot_odds
             ),
-            'bluff_efficiency': self.evaluate_bluff_efficiency(
+            'bluff_efficiency': self.evaluator.evaluate_bluff_efficiency(
                 prediction[0],
                 hand_strength,
                 game_state['opponent_tendency']
@@ -828,48 +828,6 @@ class PokerTrainer:
         
         return 0
 
-    def evaluate_decision_quality(self, prediction, game):
-        """Evaluate decision quality based on GTO principles"""
-        # Extract relevant data from game state
-        hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
-        position = game['position']
-        pot_size = float(game['pot_size'])
-        stack_size = float(game['stack_size'])
-        
-        # Basic GTO check
-        if position == 'BTN' and hand_strength > 0.5 and prediction[0] == 'raise':
-            return 1.0
-        elif position == 'SB' and hand_strength > 0.7 and prediction[0] == 'raise':
-            return 1.0
-        elif hand_strength > 0.6 and prediction[0] in ['call', 'raise']:
-            return 1.0
-        elif hand_strength < 0.3 and prediction[0] == 'fold':
-            return 1.0
-            
-        return 0.5
-
-    def evaluate_bluff_efficiency(self, action, hand_strength, opponent_tendency):
-        """Evaluate bluffing efficiency"""
-        if action != 'raise' or hand_strength > 0.5:
-            return 1.0  # Not a bluff
-            
-        # Adjust based on opponent tendency
-        opponent_adjustment = {
-            'aggressive': 0.7,  # Harder to bluff aggressive players
-            'passive': 1.2,     # Easier to bluff passive players
-            'tight': 0.8,       # Harder to bluff tight players
-            'loose': 1.1        # Easier to bluff loose players
-        }
-        
-        tendency_mult = 1.0
-        for tendency, mult in opponent_adjustment.items():
-            if tendency in opponent_tendency.lower():
-                tendency_mult *= mult
-                
-        # Calculate bluff success probability
-        bluff_equity = (0.3 + (0.5 - hand_strength)) * tendency_mult
-        
-        return max(0.0, min(1.0, bluff_equity))
         
     def _save_checkpoint(self, epoch: int, metrics: Dict[str, float]):
         """Save a checkpoint"""
