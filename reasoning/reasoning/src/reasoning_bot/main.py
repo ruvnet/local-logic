@@ -21,16 +21,25 @@ class ReasoningModule(dspy.Module):
         super().__init__()
         self.generate_reasoning = dspy.ChainOfThought(
             instructions="Provide detailed step-by-step logical analysis.",
-            signature=dspy.Signature(
-                inputs=["input"],
-                outputs=["reasoning"]
-            )
+            input_variables=["input"],
+            output_variables=["reasoning"]
         )
     
     def forward(self, input_query):
         try:
+            # Add input validation
+            if not input_query or not isinstance(input_query, str):
+                return "Invalid input. Please provide a valid text query."
+                
+            # Process the query
             result = self.generate_reasoning(input=input_query)
+            
+            # Add error handling for missing reasoning attribute
+            if not hasattr(result, 'reasoning'):
+                return "Unable to generate reasoning. Please try a different query."
+                
             return result.reasoning
+            
         except Exception as e:
             print(f"⚠️ Reasoning error: {str(e)}")
             return "Unable to process reasoning chain. Please try rephrasing your query."
