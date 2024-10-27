@@ -10,6 +10,10 @@ from poker_bot.hyperparameter_tuner import HyperparameterTuner
 import dspy
 from dspy.evaluate import Evaluate
 from typing import List, Dict, Tuple
+from phoenix.otel import register
+from openinference.instrumentation.dspy import DSPyInstrumentor
+from openinference.instrumentation.litellm import LiteLLMInstrumentor
+from opentelemetry import trace
 
 class TrainingConfig:
     """Configuration class for training parameters"""
@@ -105,7 +109,9 @@ class PokerEvaluator(dspy.Evaluate):
         return f"{rank}{suit}"
     
     def evaluate(self, model, eval_data) -> Dict[str, float]:
-        results = {metric: 0.0 for metric in self.metrics}
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("evaluation") as span:
+            results = {metric: 0.0 for metric in self.metrics}
         
         for game in eval_data:
             # Unpack game state to match agent's forward method
@@ -299,6 +305,16 @@ class PokerEvaluator(dspy.Evaluate):
 
 class PokerTrainer:
     def __init__(self):
+        # Initialize Phoenix tracing
+        tracer_provider = register(
+            project_name="poker-bot",
+            endpoint="http://localhost:4317"
+        )
+        
+        # Initialize instrumentors
+        DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
+        LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
+        
         # Configure DSPy to use GPT-4-mini
         dspy.configure(
             lm='gpt-4-mini',
@@ -430,6 +446,10 @@ class PokerTrainer:
 
     def train(self, config: TrainingConfig = None):
         """Train the model with comprehensive result tracking"""
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("training_session") as span:
+            span.set_attribute("num_epochs", self.config.num_epochs)
+            span.set_attribute("batch_size", self.config.batch_size)
         if config:
             self.config = config
 
@@ -504,6 +524,8 @@ class PokerTrainer:
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
         """Train for one epoch with efficient caching and local model training"""
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("train_epoch") as span:
         total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
         num_batches = 0
 
