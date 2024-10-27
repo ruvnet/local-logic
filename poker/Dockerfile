@@ -32,12 +32,14 @@ RUN pip install --no-cache-dir \
 
 # Install OpenTelemetry dependencies
 RUN pip install --no-cache-dir \
+    opentelemetry-exporter-otlp \
     opentelemetry-api \
     opentelemetry-sdk \
     opentelemetry-instrumentation \
     opentelemetry-instrumentation-requests \
     openinference-instrumentation-dspy \
-    openinference-instrumentation-litellm
+    openinference-instrumentation-litellm \
+    arize-phoenix-otel
 
 # Copy scripts and application code
 COPY scripts/ /app/scripts/
