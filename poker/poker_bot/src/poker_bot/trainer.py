@@ -863,7 +863,7 @@ class PokerTrainer:
             
         return 0.5  # Default for unclear situations
 
-    def _evaluate_bluff(self, action, hand_strength, opponent_tendency):
+    def evaluate_bluff_efficiency(self, action, hand_strength, opponent_tendency):
         """Evaluate bluffing efficiency"""
         if action != 'raise' or hand_strength > 0.5:
             return 1.0  # Not a bluff
