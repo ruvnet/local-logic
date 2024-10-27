@@ -1,9 +1,10 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 setup(
     name="poker_bot",
     version="0.1.0",
-    packages=find_packages(),
+    packages=find_namespace_packages(include=['poker_bot*']),
+    package_dir={'': 'src'},
     install_requires=[
         "numpy",  # For numerical operations
         "pandas",  # For data manipulation
