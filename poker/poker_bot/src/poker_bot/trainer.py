@@ -492,6 +492,41 @@ class PokerTrainer:
 
     def train(self, config: TrainingConfig = None):
         """Train the model with comprehensive result tracking"""
+        
+        # Check Phoenix availability first
+        def check_phoenix_available():
+            import socket
+            phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
+            phoenix_port = int(os.getenv('PHOENIX_GRPC_PORT', '4317'))
+            
+            try:
+                # Try to connect to Phoenix
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)  # 5 second timeout
+                result = sock.connect_ex((phoenix_host, phoenix_port))
+                sock.close()
+                return result == 0
+            except Exception as e:
+                print(f"Error checking Phoenix availability: {str(e)}")
+                return False
+
+        # Wait for Phoenix to be available
+        max_retries = 30
+        retry_count = 0
+        while not check_phoenix_available() and retry_count < max_retries:
+            if retry_count == 0:
+                print("Waiting for Phoenix to be available...")
+            print(".", end="", flush=True)
+            time.sleep(1)
+            retry_count += 1
+        
+        if retry_count >= max_retries:
+            print("\nError: Phoenix is not available. Please ensure Phoenix is running.")
+            return None
+        
+        if retry_count > 0:
+            print("\nPhoenix is available!")
+
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("training_session") as span:
             span.set_attribute("num_epochs", self.config.num_epochs)
