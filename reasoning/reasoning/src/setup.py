@@ -12,6 +12,7 @@ setup(
         "matplotlib",  # For visualization
         "seaborn",  # For statistical plots
         "openai",  # For OpenAI integration
+        "dspy-ai[all]",  # For DSPy integration
     ],
     python_requires=">=3.8",
 )

@@ -1,3 +1,5 @@
+import sys
+import dspy
 from reasoning_bot.reasoning_assistant import ReasoningAssistant
 from reasoning_bot.reasoning_agent import ReasoningAgent
 from reasoning_bot.safety_checks import SafetyChecks
@@ -5,10 +7,28 @@ from colorama import init, Fore, Style
 
 init(autoreset=True)  # Initialize colorama
 
+# Configure DSPy
+dspy.configure(
+    lm='gpt-4-mini',  # or your preferred model
+    temperature=0.7,
+    max_tokens=256
+)
+
+class ReasoningModule(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.generate_reasoning = dspy.ChainOfThought("question: {input}\nreasoning:")
+    
+    def forward(self, input_query):
+        result = self.generate_reasoning(input=input_query)
+        return result.reasoning
+
 def interactive_mode(assistant, agent, safety_checks):
     print("\n🧠 Starting Interactive Reasoning Session...")
     print("Type 'exit' to quit")
     print("\n💡 TIP: Be specific in your queries for better analysis")
+    
+    reasoning_module = ReasoningModule()
     
     while True:
         try:
@@ -20,9 +40,14 @@ def interactive_mode(assistant, agent, safety_checks):
                 
             if safety_checks.verify_input(user_input):
                 print("\n⚡ Processing query...")
+                # Use DSPy for reasoning
+                dspy_result = reasoning_module(user_input)
+                # Process with assistant
                 result = assistant.process_query(user_input)
+                
                 print(f"\n📝 Reasoning Analysis:")
-                print(f"🔍 {result}")
+                print(f"🔍 Initial Analysis: {result}")
+                print(f"🧠 Deep Reasoning: {dspy_result}")
                 print("\n💭 Additional insights available. Type 'more' for detailed analysis.")
             else:
                 print("⚠️ Invalid input detected. Please try again.")
@@ -504,6 +529,7 @@ def interactive_mode(assistant, agent, safety_checks):
 def simulate_mode(assistant, agent):
     print("🤖 Starting Simulation Mode...")
     
+    reasoning_module = ReasoningModule()
     test_cases = [
         "Analyze the implications of increasing system complexity",
         "Evaluate the trade-offs between performance and accuracy",
@@ -514,8 +540,10 @@ def simulate_mode(assistant, agent):
     for i, test in enumerate(test_cases, 1):
         print(f"\n📊 Test Case {i}:")
         print(f"Input: {test}")
+        dspy_result = reasoning_module(test)
         result = assistant.process_query(test)
-        print(f"Output: {result}")
+        print(f"Basic Analysis: {result}")
+        print(f"Deep Reasoning: {dspy_result}")
         print("-" * 50)
     
     print("\n✅ Simulation complete!")
