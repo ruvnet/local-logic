@@ -824,39 +824,25 @@ class PokerTrainer:
         
         return 0
 
-    def _evaluate_decision_quality(self, action, hand_strength, position, spr):
-        """Evaluate decision quality based on poker theory"""
-        # Position-based adjustments
-        position_multiplier = {
-            'BTN': 1.2,  # Button allows more aggressive play
-            'CO': 1.1,   # Cutoff is also strong
-            'MP': 1.0,   # Middle position is neutral
-            'UTG': 0.9,  # Under the gun requires caution
-            'BB': 0.95,  # Big blind defense
-            'SB': 0.9    # Small blind is worst position
-        }.get(position, 1.0)
+    def evaluate_decision_quality(self, prediction, game):
+        """Evaluate decision quality based on GTO principles"""
+        # Extract relevant data from game state
+        hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
+        position = game['position']
+        pot_size = float(game['pot_size'])
+        stack_size = float(game['stack_size'])
         
-        # Stack-to-pot ratio considerations
-        if spr < 3:  # Short stacked
-            if action == 'all-in' and hand_strength > 0.7:
-                return 1.0 * position_multiplier
-            if action == 'fold' and hand_strength < 0.3:
-                return 0.9 * position_multiplier
-        elif spr > 20:  # Deep stacked
-            if action == 'raise' and hand_strength > 0.8:
-                return 1.0 * position_multiplier
-            if action == 'call' and 0.6 < hand_strength < 0.8:
-                return 0.9 * position_multiplier
-        
-        # Basic hand strength alignment
-        if hand_strength > 0.8 and action in ['raise', 'all-in']:
-            return 1.0 * position_multiplier
-        if 0.6 <= hand_strength <= 0.8 and action in ['call', 'raise']:
-            return 0.9 * position_multiplier
-        if hand_strength < 0.3 and action == 'fold':
-            return 0.8 * position_multiplier
+        # Basic GTO check
+        if position == 'BTN' and hand_strength > 0.5 and prediction[0] == 'raise':
+            return 1.0
+        elif position == 'SB' and hand_strength > 0.7 and prediction[0] == 'raise':
+            return 1.0
+        elif hand_strength > 0.6 and prediction[0] in ['call', 'raise']:
+            return 1.0
+        elif hand_strength < 0.3 and prediction[0] == 'fold':
+            return 1.0
             
-        return 0.5  # Default for unclear situations
+        return 0.5
 
     def evaluate_bluff_efficiency(self, action, hand_strength, opponent_tendency):
         """Evaluate bluffing efficiency"""
