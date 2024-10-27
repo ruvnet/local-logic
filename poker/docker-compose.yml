@@ -15,6 +15,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - PHOENIX_LOG_LEVEL=debug
+      - PHOENIX_TELEMETRY_ENABLED=true
 
   poker_bot:
     container_name: poker_bot
