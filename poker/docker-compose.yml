@@ -32,9 +32,11 @@ services:
       - PHOENIX_GRPC_PORT=4317
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONUNBUFFERED=1
+      - TERM=xterm-256color
     depends_on:
       phoenix:
         condition: service_healthy
+        restart: true
     volumes:
       - ./poker_bot/src/poker_bot:/app/poker_bot
       - ./data:/app/data
@@ -42,7 +44,9 @@ services:
       - poker-net
     stdin_open: true
     tty: true
-    command: ["/bin/bash", "-c", "sleep 5 && /app/scripts/start.sh"]
+    entrypoint: []
+    command: ["python", "-u", "-m", "poker_bot.main"]
+    restart: unless-stopped
 
 networks:
   poker-net:
