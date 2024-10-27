@@ -271,33 +271,28 @@ class PokerEvaluator(dspy.Evaluate):
             
         return 0.5
         
-    def evaluate_bluff_efficiency(self, prediction, game):
-        """Calculate bluff efficiency based on fold equity and board texture"""
-        win_rate = self.calculate_win_rate(prediction, game)
-        
-        # Only evaluate bluffs
-        if prediction.lower() != 'raise' or win_rate > 0.5:
-            return 1.0
+    def evaluate_bluff_efficiency(self, action, hand_strength, opponent_tendency):
+        """Evaluate bluffing efficiency"""
+        if action != 'raise' or hand_strength > 0.5:
+            return 1.0  # Not a bluff
             
-        # Calculate fold equity based on opponent tendency
-        fold_equity = {
-            'aggressive': 0.2,
-            'passive': 0.4,
-            'tight': 0.6,
-            'loose': 0.3
-        }.get(game['opponent_tendency'].lower(), 0.3)
+        # Adjust based on opponent tendency
+        opponent_adjustment = {
+            'aggressive': 0.7,  # Harder to bluff aggressive players
+            'passive': 1.2,     # Easier to bluff passive players
+            'tight': 0.8,       # Harder to bluff tight players
+            'loose': 1.1        # Easier to bluff loose players
+        }
         
-        # Adjust for position
-        position_bonus = {
-            'BTN': 0.2,
-            'CO': 0.15,
-            'MP': 0.1,
-            'UTG': 0.0,
-            'BB': 0.05,
-            'SB': 0.0
-        }.get(game['position'], 0.0)
+        tendency_mult = 1.0
+        for tendency, mult in opponent_adjustment.items():
+            if tendency in opponent_tendency.lower():
+                tendency_mult *= mult
+                
+        # Calculate bluff success probability
+        bluff_equity = (0.3 + (0.5 - hand_strength)) * tendency_mult
         
-        return min(1.0, fold_equity + position_bonus + (0.5 - win_rate))
+        return max(0.0, min(1.0, bluff_equity))
         
     def _calculate_preflop_strength(self, hand):
         """Calculate preflop hand strength"""
