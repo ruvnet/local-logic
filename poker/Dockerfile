@@ -7,14 +7,14 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd \
     gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Copy requirements and install dependencies
-COPY poker_bot/pyproject.toml .
-RUN pip install --no-cache-dir poetry && \
-    poetry config virtualenvs.create false && \
-    poetry install --no-dev
+# Copy application code and install dependencies
+COPY poker_bot/src/setup.py .
+COPY poker_bot/src/poker_bot ./poker_bot
+RUN pip install --no-cache-dir -e .
 
 # Final stage
 FROM python:3.9-slim
