@@ -24,8 +24,8 @@ class ReasoningModule(dspy.Module):
     
     def forward(self, input_query):
         try:
-            result = self.generate_reasoning(input=input_query)
-            return result.output
+            result = self.generate_reasoning(input_query)
+            return result
         except Exception as e:
             print(f"⚠️ Reasoning error: {str(e)}")
             return "Unable to process reasoning chain. Please try rephrasing your query."
