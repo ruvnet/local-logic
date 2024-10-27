@@ -1,33 +1,58 @@
 # Advanced Poker AI Training System
-## Game Theory Optimization & Machine Learning Framework
+## Game Theory Optimization & Compilation-Based Learning Framework
 
-A sophisticated poker training system that combines game theory optimal (GTO) play with adaptive learning strategies using DSPy and advanced AI techniques. This system helps players improve their decision-making through real-time analysis and adaptive learning.
+A sophisticated poker training system that combines game theory optimal (GTO) play with an innovative compilation-based learning approach using DSPy. This system transforms poker strategy into optimized local models through pattern extraction and strategy compilation.
 
 ## 📊 System Architecture
 
-![System Architecture](assets/architecture.png)
+```mermaid
+graph TD
+    A[Poker Training Data] --> B[Compilation Layer]
+    B --> C[Pattern Extraction]
+    B --> D[Strategy Templates]
+    B --> E[Decision Rules]
+    C --> F[Hand Pattern DB]
+    D --> G[Strategy Library]
+    E --> H[Decision Engine]
+    F & G & H --> I[Runtime System]
+    I --> J[Local LLM]
+    J --> K[Poker Decision]
+```
 
-Key components:
-- Decision Engine
-- Training Framework 
-- Analysis Tools
-- Safety Checks
+Key Components:
+- Pattern Extraction Engine
+- Strategy Compilation Layer
+- Local Model Optimization
+- Runtime Decision System
 
-## 📈 Performance Metrics
+## 📈 Training Process
 
-![Training Progress](assets/training_progress.png)
-- Win rate over time
-- EV calculations
-- Decision quality trends
+```mermaid
+flowchart LR
+    A[Game State] --> B[Compiler]
+    B --> C[Pattern Analysis]
+    C --> D[Strategy Templates]
+    D --> E[Decision Rules]
+    E --> F[Optimization]
+    F --> G[Local Model]
+    G --> A
+```
+
+The system transforms poker knowledge through:
+- Pattern extraction from game states
+- Strategy template compilation
+- Local model optimization
+- Runtime decision making
+- Continuous refinement loop
 
 ## 🎯 System Overview
 
-The Poker AI Training System is designed to:
-- Analyze hand situations in real-time
-- Provide GTO-based recommendations
-- Adapt to different playing styles
-- Learn from player decisions
-- Optimize strategies based on position and stack depth
+The Poker AI Training System revolutionizes training through:
+- Compilation of poker patterns into local models
+- Real-time strategy optimization
+- Adaptive learning through pattern recognition
+- Template-based decision making
+- Position and stack-aware compilation
 
 ## 🎯 Features
 
