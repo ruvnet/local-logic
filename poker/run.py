@@ -19,6 +19,9 @@ def wait_for_phoenix():
     print(f"\n{Fore.GREEN}Phoenix is ready!{Style.RESET_ALL}")
 
 def main():
+    # Ensure we're in the correct directory
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     # Check if Phoenix is already running
     if not check_port(6006):
         print(f"{Fore.YELLOW}Starting Phoenix server...{Style.RESET_ALL}")
@@ -35,9 +38,9 @@ def main():
     print(f"\n{Fore.GREEN}Opening Phoenix UI at: {Fore.YELLOW}{phoenix_url}{Style.RESET_ALL}")
     webbrowser.open(phoenix_url)
     
-    # Start the DSPy application
-    print(f"\n{Fore.GREEN}Starting DSPy application...{Style.RESET_ALL}")
-    from poker_bot.main import main as poker_main
+    # Start the poker bot application
+    print(f"\n{Fore.GREEN}Starting Poker Bot...{Style.RESET_ALL}")
+    from poker_bot.src.poker_bot.main import main as poker_main
     poker_main()
 
 if __name__ == "__main__":

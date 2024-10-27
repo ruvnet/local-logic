@@ -12,14 +12,17 @@ services:
       retries: 5
 
   poker_bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - PHOENIX_HOST=phoenix
       - PHOENIX_PORT=6006
       - PHOENIX_GRPC_PORT=4317
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       phoenix:
         condition: service_healthy
     volumes:
-      - .:/app
+      - ./poker_bot/src/poker_bot:/app/poker_bot
     command: ["python", "-m", "poker_bot.main"]
