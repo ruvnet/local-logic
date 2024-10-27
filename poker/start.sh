@@ -21,17 +21,15 @@ check_requirements() {
     source venv/bin/activate
     
     # Install core dependencies first
-    pip install --upgrade pip wheel setuptools >/dev/null 2>&1
+    pip install --upgrade pip wheel setuptools poetry >/dev/null 2>&1
     
-    # Install packages in one command to reduce overhead
-    pip install numpy pandas treys pytest "dspy-ai[all]" scikit-learn colorama matplotlib seaborn openai >/dev/null 2>&1
+    # Install project using poetry
+    cd poker_bot
+    poetry install >/dev/null 2>&1
+    cd ..
     
     # Set PYTHONPATH
-    export PYTHONPATH="${PYTHONPATH}:/workspaces/agentic-desktop/poker/poker_bot/src"
-    
-    # Install the package in development mode
-    cd /workspaces/agentic-desktop/poker/poker_bot/src
-    pip install -e . >/dev/null 2>&1
+    export PYTHONPATH="${PWD}/poker_bot/src:${PYTHONPATH}"
 }
 
 # Main execution
@@ -40,4 +38,4 @@ check_requirements
 display_ai_initialization
 
 # Run the main application
-python /workspaces/agentic-desktop/poker/poker_bot/src/poker_bot/main.py
+python poker_bot/src/poker_bot/main.py
