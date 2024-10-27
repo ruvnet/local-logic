@@ -13,46 +13,41 @@ display_ai_initialization() {
 check_requirements() {
     echo "Checking requirements..."
     
-    # Only create venv if it doesn't exist
-    if [ ! -d "venv" ]; then
-        python -m venv venv
+    # Remove old venv if it exists
+    if [ -d "venv" ]; then
+        echo "Removing old virtual environment..."
+        rm -rf venv
     fi
+    
+    # Create fresh venv
+    echo "Creating new virtual environment..."
+    python -m venv venv
     
     source venv/bin/activate
     
     # Install core dependencies first
+    echo "Installing dependencies..."
     pip install --upgrade pip wheel setuptools >/dev/null 2>&1
     
     # Install packages in one command to reduce overhead
     pip install numpy pandas pytest "dspy-ai[all]" scikit-learn colorama matplotlib seaborn openai >/dev/null 2>&1
     
-    # Set PYTHONPATH correctly
-    export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
+    # Set PYTHONPATH to include the reasoning source directory
+    export PYTHONPATH="${PWD}/reasoning/src:${PYTHONPATH}"
     
     # Install the package in development mode
-    if [ -f "src/setup.py" ]; then
-        cd src
-        pip install -e . >/dev/null 2>&1
-        cd ..
-    fi
-}
-
-# Create necessary directories if they don't exist
-create_directories() {
-    mkdir -p src/reasoning_bot
-    mkdir -p src/reasoning_bot/models
-    mkdir -p src/reasoning_bot/data
-    mkdir -p src/reasoning_bot/config
+    cd reasoning/src
+    pip install -e . >/dev/null 2>&1
+    cd ../..
 }
 
 # Main execution
 echo "🧠 Starting Reasoning System..."
-create_directories
 check_requirements
 display_ai_initialization
 
 # Run the main application with proper error handling
-if python src/reasoning_bot/main.py; then
+if python reasoning/src/reasoning_bot/main.py; then
     echo "✅ Reasoning System completed successfully"
 else
     echo "❌ Reasoning System encountered an error"
