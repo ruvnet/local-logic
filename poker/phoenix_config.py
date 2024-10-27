@@ -15,11 +15,10 @@ def init_phoenix(service_name="poker-bot"):
         print(f"Initializing Phoenix tracing for {service_name}")
         print(f"Using endpoint: {endpoint}")
         
-        # Create OTLP exporter with retry and timeout settings
+        # Create OTLP exporter without retry parameter
         otlp_exporter = OTLPSpanExporter(
             endpoint=endpoint,
-            timeout=30,  # 30 second timeout
-            retry_on_error=True
+            timeout=30  # 30 second timeout
         )
         
         # Create TracerProvider with resource attributes

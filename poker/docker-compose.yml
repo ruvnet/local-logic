@@ -12,7 +12,7 @@ services:
     networks:
       - poker-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:6006/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:6006/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,11 +20,6 @@ services:
     environment:
       - PHOENIX_LOG_LEVEL=debug
       - PHOENIX_TELEMETRY_ENABLED=true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   poker_bot:
     container_name: poker_bot
@@ -36,10 +31,10 @@ services:
       - PHOENIX_PORT=6006
       - PHOENIX_GRPC_PORT=4317
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PYTHONUNBUFFERED=1
     depends_on:
       phoenix:
         condition: service_healthy
-        restart: true
     volumes:
       - ./poker_bot/src/poker_bot:/app/poker_bot
       - ./data:/app/data
@@ -47,12 +42,7 @@ services:
       - poker-net
     stdin_open: true
     tty: true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    command: ["/app/scripts/start.sh"]
+    command: ["/bin/bash", "-c", "sleep 5 && /app/scripts/start.sh"]
 
 networks:
   poker-net:
