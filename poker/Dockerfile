@@ -94,6 +94,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
         nc -z $PHOENIX_HOST $PHOENIX_GRPC_PORT && \
         python -c "import poker_bot; print('Health check passed')" || exit 1
 
-# Set entrypoint to bash for interactive use
-ENTRYPOINT ["/bin/bash"]
+# Set command
 CMD ["/app/scripts/start.sh"]

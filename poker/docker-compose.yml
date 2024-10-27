@@ -46,11 +46,11 @@ services:
       - poker-net
     stdin_open: true
     tty: true
-    healthcheck:
-      test: ["CMD", "/app/scripts/healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: ["/app/scripts/start.sh"]
 
 networks:
