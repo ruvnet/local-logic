@@ -383,10 +383,7 @@ def handle_command(command):
     return True
 
 def main():
-    if not OPENAI_API_KEY:
-        raise ValueError(f"{Fore.RED}OpenAI API key is not set.{Style.RESET_ALL}")
-    
-    print_poker_table()
+    print("🧠 Initializing Reasoning System Components...")
     print_instructions()
     print_position_guide()
     
@@ -429,16 +426,12 @@ def main():
         print(f"{Fore.WHITE}(e.g., aggressive, passive, tight, loose, bluffs often, etc.)")
         opponent_history = input(f"{Fore.CYAN}Describe opponent's playing style: {Style.RESET_ALL}")
 
-        poker_assistant = PokerAssistant()
-        result = poker_assistant.get_action(
-            hand=hand,
-            table_cards=table_cards,
-            position=position,
-            pot_size=pot_size,
-            stack_size=stack_size,
-            opponent_stack=opponent_stack,
-            game_type=game_type,
-            opponent_history=opponent_history
+        reasoning_assistant = ReasoningAssistant()
+        result = reasoning_assistant.process_query(
+            f"Context: Game Type={game_type}, Position={position}\n"
+            f"Query: Analyze situation with stack={stack_size}, "
+            f"opponent stack={opponent_stack}, pot={pot_size}\n"
+            f"Opponent style: {opponent_history}"
         )
 
         # Display results with formatting
