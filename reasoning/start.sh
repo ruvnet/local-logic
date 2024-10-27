@@ -3,7 +3,7 @@
 display_ai_initialization() {
     echo -e "\n🤖 Initializing Reasoning System..."
     sleep 0.5
-    for step in "Loading neural network..." "Calibrating decision matrices..." "Ready!"; do
+    for step in "Initializing reasoning modules..." "Setting up logic compilers..." "Ready!"; do
         echo -ne "⚡ $step\r"
         sleep 0.3
         echo -e "✅ $step"
