@@ -192,9 +192,12 @@ class PokerEvaluator(dspy.Evaluate):
             )
             metrics['bluff_efficiency'] += bluff_efficiency
 
-        # Average the metrics
+        # Average and clamp the metrics
         for metric in metrics:
-            metrics[metric] = (metrics[metric] / total_games) * 100  # Convert to percentage
+            # Average the metric
+            avg_value = metrics[metric] / total_games
+            # Clamp between 0 and 1 before converting to percentage
+            metrics[metric] = max(0.0, min(1.0, avg_value)) * 100
 
         return metrics
     
@@ -267,27 +270,35 @@ class PokerEvaluator(dspy.Evaluate):
     def evaluate_decision_quality(self, action: str, hand_strength: float, position: str, pot_odds: float) -> float:
         """Evaluate decision quality based on GTO principles"""
         # Basic GTO check
+        score = 0.0
+        
+        # Position-based decisions
         if position == 'BTN' and hand_strength > 0.5 and action.lower() == 'raise':
-            return 1.0
+            score = 1.0
         elif position == 'SB' and hand_strength > 0.7 and action.lower() == 'raise':
-            return 1.0
+            score = 1.0
+        # Pot odds based decisions    
         elif hand_strength > pot_odds and action.lower() in ['call', 'raise']:
-            return 1.0
+            score = 0.8
         elif hand_strength < pot_odds and action.lower() == 'fold':
-            return 1.0
+            score = 0.8
+        # Hand strength based decisions
         elif hand_strength > 0.7 and action.lower() == 'raise':
-            return 1.0
+            score = 0.9
         elif hand_strength < 0.3 and action.lower() == 'fold':
-            return 1.0
+            score = 0.7
+        else:
+            score = 0.5
             
-        return 0.5
+        # Ensure score is between 0 and 1
+        return max(0.0, min(1.0, score))
         
     def evaluate_bluff_efficiency(self, action: str, hand_strength: float, opponent_tendency: str) -> float:
         """Evaluate bluffing efficiency"""
-        if action != 'raise' or hand_strength > 0.5:
-            return 1.0  # Not a bluff
+        if action.lower() != 'raise' or hand_strength > 0.5:
+            return 0.5  # Not a bluff, return neutral score
             
-        # Adjust based on opponent tendency
+        # Adjust based on opponent tendency - only use primary tendency
         opponent_adjustment = {
             'aggressive': 0.7,  # Harder to bluff aggressive players
             'passive': 1.2,     # Easier to bluff passive players
@@ -295,14 +306,18 @@ class PokerEvaluator(dspy.Evaluate):
             'loose': 1.1        # Easier to bluff loose players
         }
         
+        # Find primary tendency
         tendency_mult = 1.0
         for tendency, mult in opponent_adjustment.items():
             if tendency in opponent_tendency.lower():
-                tendency_mult *= mult
+                tendency_mult = mult  # Set (don't multiply) the multiplier
+                break  # Only use first matching tendency
                 
-        # Calculate bluff success probability
-        bluff_equity = (0.3 + (0.5 - hand_strength)) * tendency_mult
+        # Calculate bluff success probability with better scaling
+        raw_equity = 0.3 + (0.5 - hand_strength)  # Base equity
+        bluff_equity = raw_equity * tendency_mult
         
+        # Ensure return value is between 0 and 1
         return max(0.0, min(1.0, bluff_equity))
         
     def _calculate_preflop_strength(self, hand):
