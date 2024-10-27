@@ -36,7 +36,6 @@ services:
     depends_on:
       phoenix:
         condition: service_healthy
-        restart: true
     volumes:
       - ./poker_bot/src/poker_bot:/app/poker_bot
       - ./data:/app/data
@@ -44,9 +43,21 @@ services:
       - poker-net
     stdin_open: true
     tty: true
-    entrypoint: []
-    command: ["python", "-u", "-m", "poker_bot.main"]
-    restart: unless-stopped
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      while ! nc -z phoenix 6006 || ! nc -z phoenix 4317; do
+        echo "Waiting for Phoenix..."
+        sleep 1
+      done
+      echo "Phoenix is ready! Starting Poker Bot..."
+      exec python -u -m poker_bot.main
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'python.*poker_bot.main' | grep -v grep || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 networks:
   poker-net:
