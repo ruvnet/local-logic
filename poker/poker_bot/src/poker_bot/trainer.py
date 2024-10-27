@@ -382,23 +382,8 @@ class PokerTrainer:
         self.config = TrainingConfig()
         
         # Initialize Phoenix tracing
-        try:
-            import phoenix as px
-            self.px_session = px.launch_app()
-            
-            tracer_provider = register(
-                project_name="poker-bot",
-                endpoint="http://localhost:4317"
-            )
-            
-            # Initialize instrumentors
-            from openinference.instrumentation.dspy import DSPyInstrumentor
-            DSPyInstrumentor().instrument()
-            
-            print("Phoenix tracing initialized successfully")
-        except Exception as e:
-            print(f"Phoenix initialization error: {str(e)}")
-            print("Continuing without tracing...")
+        from phoenix_config import init_phoenix
+        self.tracer_provider = init_phoenix()
         
         # Initialize Phoenix tracing once
         if HAS_PHOENIX and HAS_OPENTELEMETRY:

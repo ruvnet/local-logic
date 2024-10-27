@@ -9,8 +9,7 @@ services:
       - "4317:4317"
     volumes:
       - phoenix_data:/data
-    networks:
-      - poker-net
+    network_mode: "host"
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:6006/health > /dev/null || exit 1"]
       interval: 30s
@@ -28,18 +27,13 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - PHOENIX_HOST=phoenix
+      - PHOENIX_HOST=localhost
       - PHOENIX_PORT=6006
       - PHOENIX_GRPC_PORT=4317
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONUNBUFFERED=1
       - TERM=xterm-256color
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4317
-      - OTEL_EXPORTER_OTLP_INSECURE=true
-      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
-      - OTEL_PYTHON_LOG_CORRELATION=true
-      - OTEL_SERVICE_NAME=poker-bot
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
       - OTEL_EXPORTER_OTLP_INSECURE=true
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_PYTHON_LOG_CORRELATION=true
@@ -47,8 +41,7 @@ services:
     depends_on:
       phoenix:
         condition: service_healthy
-    networks:
-      - poker-net
+    network_mode: "host"
     stdin_open: true
     tty: true
     restart: always

@@ -8,7 +8,7 @@ def init_phoenix(service_name="poker-bot"):
     """Initialize Phoenix tracing"""
     try:
         # Get configuration from environment with defaults
-        phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
+        phoenix_host = os.getenv('PHOENIX_HOST', 'localhost')
         phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
         endpoint = f"http://{phoenix_host}:{phoenix_port}"
         
@@ -18,8 +18,8 @@ def init_phoenix(service_name="poker-bot"):
         # Create OTLP exporter with proper configuration
         otlp_exporter = OTLPSpanExporter(
             endpoint=endpoint,
-            timeout=30,  # 30 second timeout
-            insecure=True  # Allow insecure connection within Docker network
+            timeout=30,
+            insecure=True
         )
         
         # Create TracerProvider with resource attributes
