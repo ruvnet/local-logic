@@ -33,45 +33,6 @@ def interactive_mode(assistant, agent, safety_checks):
             break
         except Exception as e:
             print(f"⚠️ Error: {str(e)}")
-    """Provide situational advice based on current game state"""
-    print(f"\n{Fore.YELLOW}💡 SITUATIONAL ADVICE:")
-    
-    # Stack size considerations
-    stack_to_pot = stack_size / pot_size if pot_size > 0 else float('inf')
-    if stack_to_pot < 5:
-        print(f"{Fore.CYAN}• Stack-to-pot ratio is low ({stack_to_pot:.1f}x). Consider push/fold strategy.")
-    
-    # Position-based advice
-    position_advice = {
-        'BTN': "You have position advantage. Consider stealing if opponents show weakness.",
-        'SB': "You'll be out of position postflop. Be more selective with hands.",
-        'BB': "You have a discount to see flop. Consider defending wider against steals.",
-        'UTG': "Playing from early position requires stronger hands. Be cautious.",
-        'MP': "Middle position allows more flexibility. Watch players behind you.",
-        'CO': "Strong stealing position. Consider raising with medium-strength hands."
-    }
-    print(f"{Fore.CYAN}• {position_advice.get(position, 'Unknown position')}")
-    
-    # Stack size relative to opponent
-    stack_ratio = stack_size / opponent_stack
-    if stack_ratio < 0.5:
-        print(f"{Fore.CYAN}• Short-stacked ({stack_ratio:.1f}x opponent). Look for spots to push all-in.")
-    elif stack_ratio > 2:
-        print(f"{Fore.CYAN}• Deep-stacked ({stack_ratio:.1f}x opponent). Can play more speculative hands.")
-    
-    # Game type specific advice
-    if game_type.lower() == 'tournament':
-        print(f"{Fore.CYAN}• Tournament: Consider ICM implications and stack preservation.")
-    else:
-        print(f"{Fore.CYAN}• Cash game: Focus on +EV decisions without ICM pressure.")
-    
-    # Opponent-specific adjustments
-    if 'aggressive' in opponent_tendency.lower():
-        print(f"{Fore.CYAN}• Against aggressive opponent: Consider trapping and calling down lighter.")
-    elif 'passive' in opponent_tendency.lower():
-        print(f"{Fore.CYAN}• Against passive opponent: Value bet thinner and bluff less.")
-    elif 'smart' in opponent_tendency.lower():
-        print(f"{Fore.CYAN}• Against skilled opponent: Avoid predictable patterns and mix up play.")
 
 CARD_SUITS = {
     'h': '♥️',
@@ -502,21 +463,6 @@ def main():
         
         print(f"\n{Fore.GREEN}{'='*60}\n")
         
-        # Add situational advice
-        provide_situation_advice(
-            hand=hand,
-            position=position,
-            pot_size=pot_size,
-            stack_size=stack_size,
-            opponent_stack=opponent_stack,
-            game_type=game_type,
-            opponent_tendency=opponent_history
-        )
-    
-        # Ask to continue
-        if not get_continue_choice():
-            print(f"\n{Fore.YELLOW}Thanks for using Poker Decision Assistant! Good luck at the tables! 🎰{Style.RESET_ALL}")
-            break
 
 if __name__ == "__main__":
     main()
