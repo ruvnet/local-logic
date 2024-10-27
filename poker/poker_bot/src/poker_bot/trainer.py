@@ -760,15 +760,18 @@ class PokerTrainer:
             game_state['stack_size'],
             hand_strength
         )
+
+        # Calculate pot odds
+        pot_odds = float(game_state['pot_size']) / float(game_state['stack_size'])
         
         return {
             'win_rate': win_rate,
             'expected_value': ev,
             'decision_quality': self.evaluate_decision_quality(
-                prediction[0],
+                prediction[0],  # action
                 hand_strength,
                 game_state['position'],
-                game_state['pot_size'] / game_state['stack_size']
+                pot_odds
             ),
             'bluff_efficiency': self.evaluate_bluff_efficiency(
                 prediction[0],
