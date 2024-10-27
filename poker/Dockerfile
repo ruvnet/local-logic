@@ -39,8 +39,11 @@ RUN pip install --no-cache-dir \
     openinference-instrumentation-dspy \
     openinference-instrumentation-litellm
 
-# Copy application code
+# Copy scripts and application code
+COPY scripts/ /app/scripts/
+COPY phoenix_config.py /app/phoenix_config.py
 COPY poker_bot/src/poker_bot ./poker_bot
+RUN chmod +x /app/scripts/*.sh
 
 # Final stage
 FROM python:3.10-slim
@@ -93,4 +96,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Set entrypoint to bash for interactive use
 ENTRYPOINT ["/bin/bash"]
-CMD ["/app/start.sh"]
+CMD ["/app/scripts/start.sh"]

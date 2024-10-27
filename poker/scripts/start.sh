@@ -25,3 +25,20 @@ wait_for_phoenix
 
 # Start the application
 python -m poker_bot.main
+#!/bin/bash
+set -e
+
+# Wait for Phoenix to be ready
+echo "Waiting for Phoenix to be ready..."
+until nc -z $PHOENIX_HOST $PHOENIX_PORT && nc -z $PHOENIX_HOST $PHOENIX_GRPC_PORT; do
+    echo "Phoenix is not ready - sleeping"
+    sleep 1
+done
+
+echo "Phoenix is ready! Starting Poker Bot..."
+
+# Initialize Phoenix integration
+python -c "from phoenix_config import init_phoenix; init_phoenix()"
+
+# Start your application
+exec python -m poker_bot.main
