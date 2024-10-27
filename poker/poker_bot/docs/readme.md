@@ -1,5 +1,40 @@
 # Poker Bot Documentation
 
+## Quick Start
+
+1. Install:
+```bash
+pip install poker-bot
+```
+
+2. Basic usage:
+```python
+from poker_bot import PokerAssistant
+
+# Get advice for a hand
+assistant = PokerAssistant()
+advice = assistant.get_action(
+    hand="AH KH",
+    position="BTN", 
+    pot_size=100,
+    stack_size=1000
+)
+print(advice)
+```
+
+## Prerequisites
+
+- Python 3.8+
+- GPU recommended for training
+- 4GB+ RAM
+- Dependencies:
+  - dspy
+  - numpy
+  - tqdm
+  - colorama
+  - matplotlib (optional)
+  - seaborn (optional)
+
 ## Introduction
 The poker bot is an advanced AI system designed to assist in poker decision-making and strategy development. Built on the DSPy framework and utilizing GPT-4-mini, it combines deep learning with Monte Carlo simulations to provide sophisticated poker analysis and recommendations.
 
@@ -269,11 +304,14 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 graph TD
     A[User Input] --> B[Poker Assistant]
     B --> C[Hand Evaluator]
-    B --> D[Position Strategy]
+    B --> D[Position Strategy] 
     B --> E[Opponent Model]
     C & D & E --> F[Decision Engine]
     F --> G[Action Recommendation]
     F --> H[Reasoning]
+    H --> I[Explanation]
+    G --> J[Action]
+    I & J --> K[User]
 ```
 
 ## Training Flow
@@ -443,6 +481,19 @@ graph TD
 - [Training Guide](training.md)
 - [Evaluation Methods](evaluation.md)
 - [API Reference](api_reference.md)
+
+## Version History
+
+### v1.0.0 (2024-01)
+- Initial release
+- Basic poker decision support
+- Training system implementation
+- Evaluation metrics
+
+### v0.9.0 (2023-12)
+- Beta release
+- Core functionality complete
+- Documentation added
 
 ## Contributing
 
