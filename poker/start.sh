@@ -11,23 +11,51 @@ display_ai_initialization() {
 }
 
 check_requirements() {
-    echo "Checking requirements..."
+    echo -e "${CYAN}Checking requirements...${RESET}"
     
     # Only create venv if it doesn't exist
     if [ ! -d "venv" ]; then
+        echo -e "${YELLOW}Creating virtual environment...${RESET}"
         python -m venv venv
     fi
     
     source venv/bin/activate
-    
-    # Install core dependencies first
-    pip install --upgrade pip wheel setuptools poetry >/dev/null 2>&1
-    
-    # Install project using poetry
-    cd poker_bot
-    poetry install >/dev/null 2>&1
-    cd ..
-    
+
+    # Install pip and core dependencies
+    echo -e "${YELLOW}Installing/upgrading pip and core dependencies...${RESET}"
+    python -m pip install --upgrade pip wheel setuptools
+
+    # Install phoenix and its dependencies first
+    echo -e "${YELLOW}Installing Phoenix and dependencies...${RESET}"
+    pip install \
+        phoenix-ai==0.2.0 \
+        opentelemetry-api \
+        opentelemetry-sdk \
+        opentelemetry-instrumentation \
+        opentelemetry-instrumentation-requests \
+        openinference-instrumentation-dspy \
+        openinference-instrumentation-litellm
+
+    # Install other required packages
+    echo -e "${YELLOW}Installing other required packages...${RESET}"
+    pip install \
+        dspy-ai \
+        numpy \
+        pandas \
+        treys \
+        pytest \
+        scikit-learn \
+        colorama \
+        matplotlib \
+        seaborn \
+        tqdm \
+        python-dotenv \
+        requests
+
+    # Install the project in development mode
+    echo -e "${YELLOW}Installing project in development mode...${RESET}"
+    pip install -e poker_bot/src/
+
     # Set PYTHONPATH
     export PYTHONPATH="${PWD}/poker_bot/src:${PYTHONPATH}"
 }

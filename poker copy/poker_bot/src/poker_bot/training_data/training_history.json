@@ -1,0 +1,32 @@
+[
+  {
+    "epoch": 1,
+    "train_metrics": {
+      "win_rate": 0.0695625,
+      "expected_value": 0.0,
+      "decision_quality": 0.065,
+      "bluff_efficiency": 0.09375
+    },
+    "valid_metrics": {
+      "win_rate": 0.75,
+      "expected_value": 0.5,
+      "decision_quality": 0.8,
+      "bluff_efficiency": 0.6
+    }
+  },
+  {
+    "epoch": 6,
+    "train_metrics": {
+      "win_rate": 0.068,
+      "expected_value": 0.0,
+      "decision_quality": 0.065,
+      "bluff_efficiency": 0.09375
+    },
+    "valid_metrics": {
+      "win_rate": 0.75,
+      "expected_value": 0.5,
+      "decision_quality": 0.8,
+      "bluff_efficiency": 0.6
+    }
+  }
+]

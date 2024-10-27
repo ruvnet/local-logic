@@ -1,0 +1,18 @@
+
+Training Session Summary (20241026-231450)
+==================================================
+Duration: 1 epochs
+Final Win Rate: 75.00%
+Best Epoch: 1
+Convergence Rate: 0.00%
+
+Key Metrics:
+- Decision Quality: 80.00%
+- Bluff Efficiency: 60.00%
+- Expected Value: 50.00%
+
+Training Configuration:
+- Epochs: 2
+- Batch Size: 2
+- Learning Rate: 0.001
+- Temperature: 0.7
