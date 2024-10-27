@@ -141,6 +141,7 @@ class PokerEvaluator(dspy.Evaluate):
         return f"{rank}{suit}"
     
     def evaluate(self, model, eval_data) -> Dict[str, float]:
+        """Evaluate model performance with proper metric calculation"""
         total_games = len(eval_data)
         metrics = {
             'win_rate': 0.0,
@@ -165,42 +166,18 @@ class PokerEvaluator(dspy.Evaluate):
             # Calculate hand strength
             hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
             
-            # Calculate win rate based on action and hand strength
-            win_prob = self._calculate_win_probability(action, hand_strength, game['position'])
-            metrics['win_rate'] += win_prob
-            
-            # Calculate EV
-            ev = self._calculate_ev(action, game['pot_size'], win_prob)
-            metrics['expected_value'] += ev
-            
-            # Calculate hand strength and pot odds
-            hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
+            # Calculate pot odds
             pot_odds = float(game['pot_size']) / float(game['stack_size'])
 
-            # Calculate decision quality
-            decision_quality = self.evaluate_decision_quality(
-                action,
-                hand_strength, 
-                game['position'],
-                pot_odds
-            )
-            metrics['decision_quality'] += decision_quality
-            
-            # Calculate bluff efficiency
-            hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
-            bluff_efficiency = self.evaluate_bluff_efficiency(
-                action,
-                hand_strength,
-                game['opponent_tendency']
-            )
-            metrics['bluff_efficiency'] += bluff_efficiency
+            # Calculate individual metrics
+            metrics['win_rate'] += self._calculate_win_probability(action, hand_strength, game['position'])
+            metrics['expected_value'] += self._calculate_ev(action, game['pot_size'], hand_strength)
+            metrics['decision_quality'] += self.evaluate_decision_quality(action, hand_strength, game['position'], pot_odds)
+            metrics['bluff_efficiency'] += self.evaluate_bluff_efficiency(action, hand_strength, game['opponent_tendency'])
 
-        # Average and clamp the metrics
+        # Average the metrics and ensure they're between 0 and 1
         for metric in metrics:
-            # Average the metric
-            avg_value = metrics[metric] / total_games
-            # Clamp between 0 and 1 before converting to percentage
-            metrics[metric] = max(0.0, min(1.0, avg_value)) * 100
+            metrics[metric] = max(0.0, min(1.0, metrics[metric] / total_games))
 
         return metrics
     
@@ -403,6 +380,25 @@ class PokerTrainer:
         self.tuner = HyperparameterTuner()
         self.evaluator = PokerEvaluator()
         self.config = TrainingConfig()
+        
+        # Initialize Phoenix tracing
+        try:
+            import phoenix as px
+            self.px_session = px.launch_app()
+            
+            tracer_provider = register(
+                project_name="poker-bot",
+                endpoint="http://localhost:4317"
+            )
+            
+            # Initialize instrumentors
+            from openinference.instrumentation.dspy import DSPyInstrumentor
+            DSPyInstrumentor().instrument()
+            
+            print("Phoenix tracing initialized successfully")
+        except Exception as e:
+            print(f"Phoenix initialization error: {str(e)}")
+            print("Continuing without tracing...")
         
         # Initialize Phoenix tracing once
         if HAS_PHOENIX and HAS_OPENTELEMETRY:
@@ -900,16 +896,23 @@ class PokerTrainer:
             json.dump(history, f, indent=2)
             
     def verify_phoenix_connection(self):
-        """Verify Phoenix server connection"""
-        phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
-        phoenix_port = int(os.getenv('PHOENIX_GRPC_PORT', '4317'))
-        
+        """Verify Phoenix connection and tracing"""
         try:
-            socket.create_connection((phoenix_host, phoenix_port), timeout=5)
-            print(f"{Fore.GREEN}Phoenix server connection verified.{Style.RESET_ALL}")
+            # Test trace
+            tracer = trace.get_tracer(__name__)
+            with tracer.start_as_current_span("test_span") as span:
+                span.set_attribute("test", "true")
+            
+            # Try to connect to Phoenix
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect(("localhost", 4317))
+            s.close()
+            
+            print("Phoenix connection verified")
             return True
         except Exception as e:
-            print(f"{Fore.RED}Phoenix connection failed: {str(e)}{Style.RESET_ALL}")
+            print(f"Phoenix verification failed: {str(e)}")
             return False
 
     def _display_metrics(self, metrics: Dict):
