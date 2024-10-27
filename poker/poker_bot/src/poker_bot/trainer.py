@@ -774,7 +774,7 @@ class PokerTrainer:
                 game_state['position'],
                 game_state['pot_size'] / game_state['stack_size']
             ),
-            'bluff_efficiency': self._evaluate_bluff(
+            'bluff_efficiency': self.evaluate_bluff_efficiency(
                 prediction[0],
                 hand_strength,
                 game_state['opponent_tendency']
