@@ -107,15 +107,11 @@ display_help() {
 check_requirements() {
     echo "Checking requirements..."
     
-    # Remove old venv if it exists
-    if [ -d "venv" ]; then
-        echo "Removing old virtual environment..."
-        rm -rf venv
+    # Only create venv if it doesn't exist
+    if [ ! -d "venv" ]; then
+        echo "Creating new virtual environment..."
+        python -m venv venv
     fi
-    
-    # Create fresh venv
-    echo "Creating new virtual environment..."
-    python -m venv venv
     
     source venv/bin/activate
     
@@ -128,9 +124,14 @@ check_requirements() {
         seaborn openai networkx spacy nltk transformers torch \
         tensorflow sympy >/dev/null 2>&1
     
-    # Install additional NLP and reasoning packages
-    python -m spacy download en_core_web_sm >/dev/null 2>&1
-    python -m nltk.downloader punkt averaged_perceptron_tagger wordnet >/dev/null 2>&1
+    # Install additional NLP and reasoning packages if not already installed
+    if ! python -c "import spacy.cli" 2>/dev/null; then
+        python -m spacy download en_core_web_sm >/dev/null 2>&1
+    fi
+    
+    if ! python -c "import nltk.data" 2>/dev/null; then
+        python -m nltk.downloader punkt averaged_perceptron_tagger wordnet >/dev/null 2>&1
+    fi
     
     # Set PYTHONPATH to include the reasoning source directory
     export PYTHONPATH="${PWD}/reasoning/src:${PYTHONPATH}"
