@@ -11,7 +11,14 @@ class HyperparameterTuner:
         os.makedirs(self.results_dir, exist_ok=True)
         
     def tune_hyperparameters(self, param_grid):
-        """Run real hyperparameter tuning"""
+        """Run hyperparameter tuning"""
+        print(f"\n{Fore.YELLOW}Starting hyperparameter tuning...")
+        print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+        
+        # Use existing TracerProvider
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("hyperparameter_tuning") as span:
+
         from sklearn.model_selection import GridSearchCV
         
         # Create parameter combinations
