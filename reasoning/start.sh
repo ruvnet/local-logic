@@ -7,6 +7,34 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 RESET='\033[0m'
 
+# Track container IDs
+PHOENIX_CONTAINER=""
+POKER_CONTAINER=""
+
+cleanup() {
+    echo -e "\n${YELLOW}Cleaning up...${RESET}"
+    
+    # Stop Phoenix container if running
+    if [ ! -z "$PHOENIX_CONTAINER" ]; then
+        echo "Stopping Phoenix container..."
+        docker stop "$PHOENIX_CONTAINER" >/dev/null 2>&1
+        docker rm "$PHOENIX_CONTAINER" >/dev/null 2>&1
+    fi
+    
+    # Stop Poker container if running
+    if [ ! -z "$POKER_CONTAINER" ]; then
+        echo "Stopping Poker container..."
+        docker stop "$POKER_CONTAINER" >/dev/null 2>&1
+        docker rm "$POKER_CONTAINER" >/dev/null 2>&1
+    fi
+    
+    echo -e "${GREEN}Cleanup complete${RESET}"
+    exit 0
+}
+
+# Set trap for cleanup
+trap cleanup EXIT INT TERM
+
 display_ai_initialization() {
     echo -e "\n🤖 Initializing Poker AI System..."
     sleep 0.5
@@ -22,6 +50,11 @@ check_docker() {
         echo -e "${RED}Docker is not installed. Please install Docker first.${RESET}"
         exit 1
     fi
+    
+    if ! docker info >/dev/null 2>&1; then
+        echo -e "${RED}Docker daemon is not running. Please start Docker first.${RESET}"
+        exit 1
+    }
 }
 
 display_settings() {
@@ -207,55 +240,57 @@ check_requirements() {
 }
 
 start_phoenix() {
-    echo -e "${YELLOW}Checking Phoenix server...${RESET}"
+    echo -e "${YELLOW}Starting Phoenix container...${RESET}"
     
-    # Check if Phoenix container is already running
-    if ! docker ps | grep -q phoenix; then
-        echo -e "${CYAN}Starting Phoenix server...${RESET}"
-        docker run -d \
-            --name phoenix \
-            -p 6006:6006 \
-            -p 4317:4317 \
-            arizephoenix/phoenix:latest
-        
-        # Wait for Phoenix to be ready
-        echo -e "${YELLOW}Waiting for Phoenix to start...${RESET}"
-        until curl -s http://localhost:6006 >/dev/null; do
-            echo -n "."
-            sleep 1
-        done
-        echo -e "\n${GREEN}Phoenix server is ready!${RESET}"
-    else
-        echo -e "${GREEN}Phoenix server is already running${RESET}"
-    fi
+    # Stop any existing Phoenix container
+    docker ps -q --filter "name=phoenix" | xargs -r docker stop >/dev/null 2>&1
+    docker ps -aq --filter "name=phoenix" | xargs -r docker rm >/dev/null 2>&1
+    
+    # Start new Phoenix container
+    PHOENIX_CONTAINER=$(docker run -d \
+        --name phoenix \
+        -p 6006:6006 \
+        -p 4317:4317 \
+        arizephoenix/phoenix:latest)
+    
+    echo -e "${YELLOW}Waiting for Phoenix to start...${RESET}"
+    until curl -s http://localhost:6006 >/dev/null; do
+        echo -n "."
+        sleep 1
+    done
+    echo -e "\n${GREEN}Phoenix is ready!${RESET}"
 }
 
-build_docker() {
-    echo -e "${YELLOW}Building Docker container...${RESET}"
-    docker-compose build
+build_poker() {
+    echo -e "${YELLOW}Building Poker Bot container...${RESET}"
+    docker-compose build --no-cache poker_bot
+}
+
+start_poker() {
+    echo -e "${YELLOW}Starting Poker Bot container...${RESET}"
+    
+    # Stop any existing Poker container
+    docker ps -q --filter "name=poker_bot" | xargs -r docker stop >/dev/null 2>&1
+    docker ps -aq --filter "name=poker_bot" | xargs -r docker rm >/dev/null 2>&1
+    
+    # Start new Poker container
+    POKER_CONTAINER=$(docker-compose up -d poker_bot)
+    
+    # Follow logs
+    docker-compose logs -f poker_bot
 }
 
 # Main execution
-echo -e "${GREEN}🎲 Starting Poker Bot...${RESET}"
+echo -e "${GREEN}🎲 Starting Poker Bot System...${RESET}"
 
-# Check Docker installation
+# Check Docker installation and daemon
 check_docker
 
-# Install requirements
-check_requirements
-
-# Start Phoenix server
+# Build and start containers
+build_poker
 start_phoenix
+start_poker
 
-# Build and start Docker containers
-build_docker
-
-# Display initialization
-display_ai_initialization
-
-# Run the main application
-echo -e "${GREEN}Starting Poker Bot application...${RESET}"
-python poker_bot/src/poker_bot/main.py
-
-# Cleanup on exit
-trap 'echo -e "${YELLOW}Cleaning up...${RESET}"; docker-compose down' EXIT
+# Wait for user input (the containers will be cleaned up when script exits)
+echo -e "\n${YELLOW}Press Ctrl+C to stop the application${RESET}"
+wait

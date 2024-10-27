@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   phoenix:
+    container_name: phoenix
     image: arizephoenix/phoenix:latest
     ports:
       - "6006:6006"
@@ -12,6 +13,7 @@ services:
       retries: 5
 
   poker_bot:
+    container_name: poker_bot
     build:
       context: .
       dockerfile: Dockerfile
