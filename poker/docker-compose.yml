@@ -15,6 +15,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
+    networks:
+      - poker-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     logging:
       driver: "json-file"
       options:
@@ -50,6 +58,10 @@ services:
       timeout: 10s
       retries: 3
     command: ["/app/scripts/start.sh"]
+
+networks:
+  poker-net:
+    driver: bridge
 
 networks:
   poker-net:
