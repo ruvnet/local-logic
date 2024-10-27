@@ -55,6 +55,7 @@ services:
 
 networks:
   poker-net:
+    name: poker-net
     driver: bridge
 
 volumes:
