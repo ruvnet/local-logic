@@ -187,6 +187,8 @@ class HyperparameterTuner:
         plt.close()
 import os
 import json
+from colorama import Fore, Style
+from opentelemetry import trace
 try:
     import matplotlib.pyplot as plt
     import seaborn as sns
