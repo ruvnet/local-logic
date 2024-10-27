@@ -8,19 +8,39 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd \
     gcc \
     python3-dev \
+    git \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 # Upgrade pip first
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools
 
-# Copy application code and install dependencies
-COPY poker_bot/src/setup.py .
-COPY poker_bot/src/poker_bot ./poker_bot
+# Install core dependencies first
+RUN pip install --no-cache-dir \
+    numpy \
+    pandas \
+    treys \
+    pytest \
+    dspy-ai[all] \
+    scikit-learn \
+    colorama \
+    matplotlib \
+    openai \
+    seaborn \
+    tqdm \
+    python-dotenv
 
-# Install in editable mode with relaxed phoenix-ai requirement
-RUN sed -i 's/phoenix-ai==0.2.0/phoenix-ai>=0.2.0/g' setup.py && \
-    pip install --no-cache-dir -e .
+# Install OpenTelemetry dependencies
+RUN pip install --no-cache-dir \
+    opentelemetry-api \
+    opentelemetry-sdk \
+    opentelemetry-instrumentation \
+    opentelemetry-instrumentation-requests \
+    openinference-instrumentation-dspy \
+    openinference-instrumentation-litellm
+
+# Copy application code
+COPY poker_bot/src/poker_bot ./poker_bot
 
 # Final stage
 FROM python:3.10-slim
@@ -35,7 +55,7 @@ RUN useradd -m -s /bin/bash poker
 
 WORKDIR /app
 
-# Install runtime dependencies and tools for interactive use
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd \
     curl \
@@ -45,9 +65,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /app/poker_bot ./poker_bot
 
-# Copy application code and scripts
-COPY poker_bot/src/poker_bot ./poker_bot
+# Copy scripts
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
@@ -61,7 +81,8 @@ USER poker
 ENV PHOENIX_HOST=phoenix \
     PHOENIX_PORT=6006 \
     PHOENIX_GRPC_PORT=4317 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
