@@ -298,27 +298,28 @@ class PokerEvaluator(dspy.Evaluate):
         if action.lower() != 'raise' or hand_strength > 0.5:
             return 0.5  # Not a bluff, return neutral score
             
-        # Adjust based on opponent tendency - only use primary tendency
-        opponent_adjustment = {
-            'aggressive': 0.7,  # Harder to bluff aggressive players
-            'passive': 1.2,     # Easier to bluff passive players
-            'tight': 0.8,       # Harder to bluff tight players
-            'loose': 1.1        # Easier to bluff loose players
+        # Base bluff score starts at 0.3
+        bluff_score = 0.3
+        
+        # Adjust based on hand strength (worse hands make better bluffs)
+        bluff_score += max(0.0, 0.4 * (0.5 - hand_strength))
+        
+        # Single opponent tendency adjustment
+        tendency_adjustments = {
+            'aggressive': -0.1,  # Harder to bluff aggressive players
+            'passive': 0.1,      # Easier to bluff passive players
+            'tight': -0.1,       # Harder to bluff tight players
+            'loose': 0.1         # Easier to bluff loose players
         }
         
-        # Find primary tendency
-        tendency_mult = 1.0
-        for tendency, mult in opponent_adjustment.items():
+        # Apply only one adjustment
+        for tendency, adjustment in tendency_adjustments.items():
             if tendency in opponent_tendency.lower():
-                tendency_mult = mult  # Set (don't multiply) the multiplier
-                break  # Only use first matching tendency
+                bluff_score += adjustment
+                break
                 
-        # Calculate bluff success probability with better scaling
-        raw_equity = 0.3 + (0.5 - hand_strength)  # Base equity
-        bluff_equity = raw_equity * tendency_mult
-        
         # Ensure return value is between 0 and 1
-        return max(0.0, min(1.0, bluff_equity))
+        return max(0.0, min(1.0, bluff_score))
         
     def _calculate_preflop_strength(self, hand):
         """Calculate preflop hand strength"""
