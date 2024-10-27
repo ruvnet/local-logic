@@ -250,19 +250,20 @@ class PokerEvaluator(dspy.Evaluate):
             
         return 0.0
         
-    def evaluate_decision_quality(self, prediction, game):
+    def evaluate_decision_quality(self, action: str, hand_strength: float, position: str, pot_odds: float) -> float:
         """Evaluate decision quality based on GTO principles"""
-        win_rate = self.calculate_win_rate(prediction, game)
-        pot_odds = float(game['pot_size']) / float(game['stack_size'])
-        
         # Basic GTO check
-        if win_rate > pot_odds and prediction.lower() in ['call', 'raise']:
+        if position == 'BTN' and hand_strength > 0.5 and action.lower() == 'raise':
             return 1.0
-        elif win_rate < pot_odds and prediction.lower() == 'fold':
+        elif position == 'SB' and hand_strength > 0.7 and action.lower() == 'raise':
             return 1.0
-        elif win_rate > 0.7 and prediction.lower() == 'raise':
+        elif hand_strength > pot_odds and action.lower() in ['call', 'raise']:
             return 1.0
-        elif win_rate < 0.3 and prediction.lower() == 'fold':
+        elif hand_strength < pot_odds and action.lower() == 'fold':
+            return 1.0
+        elif hand_strength > 0.7 and action.lower() == 'raise':
+            return 1.0
+        elif hand_strength < 0.3 and action.lower() == 'fold':
             return 1.0
             
         return 0.5
