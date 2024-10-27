@@ -335,11 +335,20 @@ class PokerEvaluator(dspy.Evaluate):
 class PokerTrainer:
     def __init__(self):
         if HAS_PHOENIX and HAS_OPENTELEMETRY:
-            # Initialize Phoenix tracing
-            tracer_provider = register(
-                project_name="poker-bot",
-                endpoint="http://localhost:4317"
-            )
+            # Initialize Phoenix tracing with correct endpoint
+            phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
+            phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
+            endpoint = f"http://{phoenix_host}:{phoenix_port}"
+        
+            print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
+        
+            try:
+                # Register with correct endpoint
+                tracer_provider = register(
+                    project_name="poker-bot",
+                    endpoint=endpoint,
+                    insecure=True
+                )
             
             # Initialize instrumentors if available
             try:

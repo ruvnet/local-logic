@@ -36,6 +36,9 @@ services:
       - TERM=xterm-256color
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4317
       - OTEL_EXPORTER_OTLP_INSECURE=true
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_PYTHON_LOG_CORRELATION=true
+      - OTEL_SERVICE_NAME=poker-bot
     depends_on:
       phoenix:
         condition: service_healthy
