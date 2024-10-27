@@ -3,16 +3,25 @@
 # Add color variables
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
 RESET='\033[0m'
 
 display_ai_initialization() {
-    echo -e "\n🧠 Initializing Local Logic System..."
+    echo -e "\n🤖 Initializing Poker AI System..."
     sleep 0.5
-    for step in "Loading reasoning patterns..." "Compiling logic templates..." "Initializing inference engine..." "Activating decision modules..." "System ready"; do
+    for step in "Loading neural network..." "Calibrating decision matrices..." "Ready!"; do
         echo -ne "⚡ $step\r"
         sleep 0.3
         echo -e "✅ $step"
     done
+}
+
+check_docker() {
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}Docker is not installed. Please install Docker first.${RESET}"
+        exit 1
+    fi
 }
 
 display_settings() {
@@ -155,116 +164,98 @@ display_help() {
 }
 
 check_requirements() {
-    echo "Checking requirements..."
+    echo -e "${CYAN}Checking requirements...${RESET}"
     
     # Only create venv if it doesn't exist
     if [ ! -d "venv" ]; then
-        echo "Creating new virtual environment..."
+        echo -e "${YELLOW}Creating virtual environment...${RESET}"
         python -m venv venv
     fi
     
     source venv/bin/activate
-
-    # Function to check if a package is installed
-    package_installed() {
-        python -c "import $1" 2>/dev/null
-        return $?
-    }
-
-    # Function to check pip package version
-    pip_package_installed() {
-        pip show $1 >/dev/null 2>&1
-        return $?
-    }
-
-    # Only upgrade pip if version is old
-    if ! pip --version | grep -q "pip 2[3-9]"; then
-        echo "Upgrading pip..."
-        pip install --upgrade pip >/dev/null 2>&1
-    fi
-
-    # List of required packages with their import names
-    declare -A packages=(
-        ["numpy"]="numpy"
-        ["pandas"]="pandas"
-        ["pytest"]="pytest"
-        ["scikit-learn"]="sklearn"
-        ["colorama"]="colorama"
-        ["matplotlib"]="matplotlib"
-        ["seaborn"]="seaborn"
-        ["openai"]="openai"
-    )
-
-    # Check and install missing packages
-    missing_packages=()
-    for pkg in "${!packages[@]}"; do
-        if ! package_installed "${packages[$pkg]}"; then
-            missing_packages+=("$pkg")
-        fi
-    done
-
-    # Install missing packages if any
-    if [ ${#missing_packages[@]} -ne 0 ]; then
-        echo "Installing missing packages: ${missing_packages[*]}"
-        pip install "${missing_packages[@]}" >/dev/null 2>&1
-    fi
-
+    
+    echo -e "${YELLOW}Installing/upgrading pip and core dependencies...${RESET}"
+    pip install --upgrade pip wheel setuptools poetry >/dev/null 2>&1
+    
+    echo -e "${YELLOW}Installing required packages...${RESET}"
+    pip install --upgrade \
+        phoenix-ai \
+        opentelemetry-api \
+        opentelemetry-sdk \
+        opentelemetry-instrumentation \
+        openinference-instrumentation-dspy \
+        openinference-instrumentation-litellm \
+        dspy-ai \
+        numpy \
+        pandas \
+        treys \
+        pytest \
+        scikit-learn \
+        colorama \
+        matplotlib \
+        seaborn \
+        tqdm \
+        python-dotenv >/dev/null 2>&1
+    
+    # Install project in development mode
+    cd poker_bot/src
+    pip install -e . >/dev/null 2>&1
+    cd ../..
+    
     # Set PYTHONPATH
-    export PYTHONPATH="${PWD}/reasoning/src:${PYTHONPATH}"
+    export PYTHONPATH="${PWD}/poker_bot/src:${PYTHONPATH}"
+}
 
-    # Only install in development mode if not already installed
-    if ! pip_package_installed "reasoning-bot"; then
-        cd reasoning/src
-        pip install -e . >/dev/null 2>&1
-        cd ../..
+start_phoenix() {
+    echo -e "${YELLOW}Checking Phoenix server...${RESET}"
+    
+    # Check if Phoenix container is already running
+    if ! docker ps | grep -q phoenix; then
+        echo -e "${CYAN}Starting Phoenix server...${RESET}"
+        docker run -d \
+            --name phoenix \
+            -p 6006:6006 \
+            -p 4317:4317 \
+            arizephoenix/phoenix:latest
+        
+        # Wait for Phoenix to be ready
+        echo -e "${YELLOW}Waiting for Phoenix to start...${RESET}"
+        until curl -s http://localhost:6006 >/dev/null; do
+            echo -n "."
+            sleep 1
+        done
+        echo -e "\n${GREEN}Phoenix server is ready!${RESET}"
+    else
+        echo -e "${GREEN}Phoenix server is already running${RESET}"
     fi
 }
 
+build_docker() {
+    echo -e "${YELLOW}Building Docker container...${RESET}"
+    docker-compose build
+}
+
 # Main execution
-echo -e "${YELLOW}🧠 Starting Local Logic System...${RESET}"
+echo -e "${GREEN}🎲 Starting Poker Bot...${RESET}"
+
+# Check Docker installation
+check_docker
+
+# Install requirements
 check_requirements
+
+# Start Phoenix server
+start_phoenix
+
+# Build and start Docker containers
+build_docker
+
+# Display initialization
 display_ai_initialization
-display_main_menu
 
-# Handle commands
-while true; do
-    read -r command
-    case $command in
-        "reason")
-            python reasoning/src/reasoning_bot/main.py interactive
-            display_main_menu
-            ;;
-        "simulate")
-            python reasoning/src/reasoning_bot/main.py simulate
-            display_main_menu
-            ;;
-        "review")
-            python reasoning/src/reasoning_bot/main.py review
-            display_main_menu
-            ;;
-        "settings")
-            display_settings
-            display_main_menu
-            ;;
-        "help")
-            display_help
-            display_main_menu
-            ;;
-        "exit")
-            echo -e "${YELLOW}Exiting system...${RESET}"
-            exit 0
-            ;;
-        *)
-            echo -e "${YELLOW}Invalid command. Please try again.${RESET}"
-            display_main_menu
-            ;;
-    esac
-done
+# Run the main application
+echo -e "${GREEN}Starting Poker Bot application...${RESET}"
+python poker_bot/src/poker_bot/main.py
 
-# Run the main application with proper error handling
-if python reasoning/src/reasoning_bot/main.py; then
-    echo -e "${CYAN}✅ Local Logic System completed successfully${RESET}"
-else
-    echo -e "${YELLOW}❌ Local Logic System encountered an error${RESET}"
-    exit 1
-fi
+# Cleanup on exit
+trap 'echo -e "${YELLOW}Cleaning up...${RESET}"; docker-compose down' EXIT
