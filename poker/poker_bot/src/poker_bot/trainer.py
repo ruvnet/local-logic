@@ -138,12 +138,16 @@ class PokerEvaluator(dspy.Evaluate):
         return f"{rank}{suit}"
     
     def evaluate(self, model, eval_data) -> Dict[str, float]:
-        tracer = trace.get_tracer(__name__)
-        with tracer.start_as_current_span("evaluation") as span:
-            results = {metric: 0.0 for metric in self.metrics}
-        
+        total_games = len(eval_data)
+        metrics = {
+            'win_rate': 0.0,
+            'expected_value': 0.0,
+            'decision_quality': 0.0,
+            'bluff_efficiency': 0.0
+        }
+
         for game in eval_data:
-            # Unpack game state to match agent's forward method
+            # Get model prediction
             action, reasoning = model(
                 hand=game['hand'],
                 table_cards=game['table_cards'],
@@ -154,55 +158,82 @@ class PokerEvaluator(dspy.Evaluate):
                 game_type=game['game_type'],
                 opponent_tendency=game['opponent_tendency']
             )
+
+            # Calculate hand strength
+            hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
             
-            # Calculate various metrics
-            results["win_rate"] += self.calculate_win_rate(action, game)
-            results["expected_value"] += self.calculate_ev(action, game)
-            results["decision_quality"] += self.evaluate_decision_quality(action, game)
-            results["bluff_efficiency"] += self.evaluate_bluff_efficiency(action, game)
-        
-        # Average the results
-        for metric in results:
-            results[metric] /= len(eval_data)
+            # Calculate win rate based on action and hand strength
+            win_prob = self._calculate_win_probability(action, hand_strength, game['position'])
+            metrics['win_rate'] += win_prob
             
-        return results
+            # Calculate EV
+            ev = self._calculate_ev(action, game['pot_size'], win_prob)
+            metrics['expected_value'] += ev
+            
+            # Calculate decision quality
+            decision_quality = self._evaluate_decision_quality(
+                action, hand_strength, game['position'], game['pot_size'], game['stack_size']
+            )
+            metrics['decision_quality'] += decision_quality
+            
+            # Calculate bluff efficiency
+            bluff_efficiency = self._evaluate_bluff_efficiency(
+                action, hand_strength, game['opponent_tendency']
+            )
+            metrics['bluff_efficiency'] += bluff_efficiency
+
+        # Average the metrics
+        for metric in metrics:
+            metrics[metric] = (metrics[metric] / total_games) * 100  # Convert to percentage
+
+        return metrics
     
-    def calculate_win_rate(self, prediction, game):
-        """Calculate actual win rate based on hand strength and action"""
-        from treys import Card, Evaluator
-        
-        # Convert cards to Treys format
-        hand = [Card.new(self._convert_to_treys_format(card.strip())) 
-               for card in game['hand'].split()]
-        board = []
-        if game['table_cards']:
-            board = [Card.new(self._convert_to_treys_format(card.strip())) 
-                    for card in game['table_cards'].split()]
-            
-        evaluator = Evaluator()
-        
-        # Calculate base hand strength
-        if board:
-            hand_value = evaluator.evaluate(board, hand)
-            hand_strength = 1.0 - (hand_value / 7462)  # Normalize
-        else:
-            # Preflop hand strength
-            hand_strength = self._calculate_preflop_strength(game['hand'])
-            
-        # Adjust win rate based on action and position
+    def _calculate_win_probability(self, action, hand_strength, position):
+        """Calculate win probability based on action and hand strength"""
         position_multiplier = {
             'BTN': 1.2, 'CO': 1.15, 'MP': 1.0,
             'UTG': 0.9, 'BB': 0.95, 'SB': 0.85
-        }.get(game['position'], 1.0)
-        
+        }.get(position, 1.0)
+
         action_multiplier = {
             'fold': 0.0,
             'call': 1.0,
             'raise': 1.2,
             'all-in': 1.3
-        }.get(prediction.lower(), 1.0)
+        }.get(action.lower(), 1.0)
+
+        return min(1.0, hand_strength * position_multiplier * action_multiplier)
+
+    def _calculate_ev(self, action, pot_size, win_prob):
+        """Calculate expected value"""
+        if action.lower() == 'fold':
+            return 0.0
+        elif action.lower() == 'call':
+            return pot_size * (win_prob - (1 - win_prob))
+        elif action.lower() in ['raise', 'all-in']:
+            return pot_size * 2 * (win_prob - (1 - win_prob))
+        return 0.0
+
+    def _calculate_hand_strength(self, hand, table_cards):
+        """Calculate hand strength using card values"""
+        # Simple hand strength calculation
+        hand_cards = hand.split()
+        ranks = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 
+                'T':10, 'J':11, 'Q':12, 'K':13, 'A':14}
         
-        return hand_strength * position_multiplier * action_multiplier
+        # Calculate base strength from hole cards
+        rank1 = ranks.get(hand_cards[0][0], 0)
+        rank2 = ranks.get(hand_cards[1][0], 0)
+        suited = hand_cards[0][1] == hand_cards[1][1]
+        
+        # Base strength calculation
+        strength = (rank1 + rank2) / 28.0  # Normalize by max possible (A+K)
+        if suited:
+            strength *= 1.2
+        if rank1 == rank2:  # Pocket pair
+            strength *= 1.5
+            
+        return min(1.0, strength)
         
     def calculate_ev(self, prediction, game):
         """Calculate expected value based on pot odds and win rate"""
