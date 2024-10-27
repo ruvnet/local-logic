@@ -19,13 +19,20 @@ dspy.configure(
 class ReasoningModule(dspy.Module):
     def __init__(self):
         super().__init__()
-        # Correct signature format with input and output fields
-        self.generate_reasoning = dspy.ChainOfThought("question: str -> reasoning: str")
+        self.generate_reasoning = dspy.ChainOfThought(
+            instructions="Provide detailed step-by-step logical analysis.",
+            signature={
+                "input": "The topic or scenario to analyze",
+                "output": "Detailed step-by-step logical analysis"
+            }
+        )
     
     def forward(self, input_query):
         try:
-            result = self.generate_reasoning(question=input_query)
-            return result.reasoning
+            # Create a properly formatted input dictionary
+            input_data = {"input": input_query}
+            result = self.generate_reasoning(**input_data)
+            return result.output
         except Exception as e:
             print(f"⚠️ Reasoning error: {str(e)}")
             return "Unable to process reasoning chain. Please try rephrasing your query."
