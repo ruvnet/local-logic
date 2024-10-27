@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   phoenix:
     container_name: phoenix
@@ -7,14 +9,6 @@ services:
       - "4317:4317"
     volumes:
       - phoenix_data:/data
-    networks:
-      - poker-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6006/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
     networks:
       - poker-net
     healthcheck:
@@ -58,10 +52,6 @@ services:
       timeout: 10s
       retries: 3
     command: ["/app/scripts/start.sh"]
-
-networks:
-  poker-net:
-    driver: bridge
 
 networks:
   poker-net:
