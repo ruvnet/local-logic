@@ -763,7 +763,7 @@ class PokerTrainer:
         return {
             'win_rate': win_rate,
             'expected_value': ev,
-            'decision_quality': self._evaluate_decision_quality(
+            'decision_quality': self.evaluate_decision_quality(
                 prediction[0],
                 hand_strength,
                 game_state['position'],
