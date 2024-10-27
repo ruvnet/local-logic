@@ -170,8 +170,17 @@ class PokerEvaluator(dspy.Evaluate):
             ev = self._calculate_ev(action, game['pot_size'], win_prob)
             metrics['expected_value'] += ev
             
+            # Calculate hand strength and pot odds
+            hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
+            pot_odds = float(game['pot_size']) / float(game['stack_size'])
+
             # Calculate decision quality
-            decision_quality = self.evaluate_decision_quality((action, reasoning), game)
+            decision_quality = self.evaluate_decision_quality(
+                action,
+                hand_strength, 
+                game['position'],
+                pot_odds
+            )
             metrics['decision_quality'] += decision_quality
             
             # Calculate bluff efficiency
