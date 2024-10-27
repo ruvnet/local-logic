@@ -1,5 +1,7 @@
 import sys
 import dspy
+import os
+import json
 from reasoning_bot.reasoning_assistant import ReasoningAssistant
 from reasoning_bot.reasoning_agent import ReasoningAgent
 from reasoning_bot.safety_checks import SafetyChecks
