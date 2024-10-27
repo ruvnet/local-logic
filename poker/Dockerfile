@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.9-slim as builder
+FROM python:3.10-slim as builder
 
 WORKDIR /app
 
@@ -11,13 +11,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
+# Upgrade pip first
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools
+
 # Copy application code and install dependencies
 COPY poker_bot/src/setup.py .
 COPY poker_bot/src/poker_bot ./poker_bot
-RUN pip install --no-cache-dir -e .
+
+# Install in editable mode with relaxed phoenix-ai requirement
+RUN sed -i 's/phoenix-ai==0.2.0/phoenix-ai>=0.2.0/g' setup.py && \
+    pip install --no-cache-dir -e .
 
 # Final stage
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # Add metadata labels
 LABEL maintainer="Poker Bot Team" \
@@ -38,7 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 # Copy application code and scripts
 COPY poker_bot/src/poker_bot ./poker_bot

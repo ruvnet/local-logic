@@ -16,7 +16,7 @@ setup(
         "openai",  # For OpenAI API integration
         "seaborn",  # For statistical visualization
         "tqdm",  # For progress bars
-        "phoenix-ai==0.2.0",  # Phoenix AI package
+        "phoenix-ai>=0.2.0",  # Phoenix AI package
         "opentelemetry-api",  # OpenTelemetry support
         "opentelemetry-sdk",
         "opentelemetry-instrumentation",
