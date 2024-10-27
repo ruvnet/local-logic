@@ -482,3 +482,41 @@ def main():
 
 if __name__ == "__main__":
     main()
+from reasoning_bot.reasoning_assistant import ReasoningAssistant
+from reasoning_bot.reasoning_agent import ReasoningAgent
+from reasoning_bot.safety_checks import SafetyChecks
+
+def main():
+    print("🧠 Initializing Reasoning System Components...")
+    
+    # Initialize core components
+    reasoning_assistant = ReasoningAssistant()
+    reasoning_agent = ReasoningAgent()
+    safety_checks = SafetyChecks()
+    
+    print("✅ Reasoning System Ready")
+    print("Type 'exit' to quit")
+    
+    while True:
+        try:
+            user_input = input("\n🤔 Enter reasoning query: ")
+            
+            if user_input.lower() == 'exit':
+                print("👋 Shutting down Reasoning System...")
+                break
+                
+            # Process the reasoning query
+            if safety_checks.verify_input(user_input):
+                result = reasoning_assistant.process_query(user_input)
+                print(f"\n📝 Reasoning Output: {result}")
+            else:
+                print("⚠️ Invalid input detected. Please try again.")
+                
+        except KeyboardInterrupt:
+            print("\n👋 Shutting down Reasoning System...")
+            break
+        except Exception as e:
+            print(f"⚠️ Error: {str(e)}")
+
+if __name__ == "__main__":
+    main()

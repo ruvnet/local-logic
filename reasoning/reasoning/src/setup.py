@@ -19,3 +19,20 @@ setup(
     ],
     python_requires=">=3.8",
 )
+from setuptools import setup, find_packages
+
+setup(
+    name="reasoning_bot",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[
+        "numpy",
+        "pandas",
+        "dspy-ai",
+        "scikit-learn",
+        "colorama",
+        "matplotlib",
+        "seaborn",
+        "openai"
+    ],
+)

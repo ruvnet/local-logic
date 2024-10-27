@@ -14,3 +14,11 @@ class SafetyChecks:
         """Verify that action is valid"""
         valid_actions = ['fold', 'call', 'raise', 'all-in']
         return action.lower() in valid_actions
+class SafetyChecks:
+    def __init__(self):
+        self.initialized = True
+        print("🛡️ Safety Checks initialized")
+        
+    def verify_input(self, input_data: str) -> bool:
+        # Add your input validation logic here
+        return len(input_data.strip()) > 0
