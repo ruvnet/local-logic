@@ -478,6 +478,82 @@ if __name__ == "__main__":
 from reasoning_bot.reasoning_assistant import ReasoningAssistant
 from reasoning_bot.reasoning_agent import ReasoningAgent
 from reasoning_bot.safety_checks import SafetyChecks
+from colorama import init, Fore, Style
+import sys
+import json
+from datetime import datetime
+import os
+
+init(autoreset=True)
+
+def interactive_mode(assistant, agent, safety_checks):
+    print("🧠 Starting Interactive Reasoning Session...")
+    print("Type 'exit' to quit")
+    
+    while True:
+        try:
+            user_input = input("\n🤔 Enter reasoning query: ")
+            
+            if user_input.lower() == 'exit':
+                print("👋 Ending reasoning session...")
+                break
+                
+            if safety_checks.verify_input(user_input):
+                result = assistant.process_query(user_input)
+                print(f"\n📝 Reasoning Output: {result}")
+            else:
+                print("⚠️ Invalid input detected. Please try again.")
+                
+        except KeyboardInterrupt:
+            print("\n👋 Ending reasoning session...")
+            break
+        except Exception as e:
+            print(f"⚠️ Error: {str(e)}")
+
+def simulate_mode(assistant, agent):
+    print("🤖 Starting Simulation Mode...")
+    
+    test_cases = [
+        "Analyze the implications of increasing system complexity",
+        "Evaluate the trade-offs between performance and accuracy",
+        "Consider the impact of real-time processing requirements",
+        "Assess the benefits of parallel processing implementation"
+    ]
+    
+    for i, test in enumerate(test_cases, 1):
+        print(f"\n📊 Test Case {i}:")
+        print(f"Input: {test}")
+        result = assistant.process_query(test)
+        print(f"Output: {result}")
+        print("-" * 50)
+    
+    print("\n✅ Simulation complete!")
+
+def review_mode(assistant):
+    print("🔍 Starting Review Mode...")
+    
+    # Create logs directory if it doesn't exist
+    log_dir = "reasoning_logs"
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Load existing logs
+    log_file = os.path.join(log_dir, "reasoning_history.json")
+    try:
+        with open(log_file, 'r') as f:
+            logs = json.load(f)
+    except FileNotFoundError:
+        logs = []
+    
+    if not logs:
+        print("No reasoning history found.")
+        return
+    
+    print(f"\nFound {len(logs)} reasoning sessions:")
+    for i, log in enumerate(logs, 1):
+        print(f"\n{i}. Session from {log['timestamp']}")
+        print(f"Query: {log['query']}")
+        print(f"Result: {log['result']}")
+        print("-" * 50)
 
 def main():
     print("🧠 Initializing Reasoning System Components...")
@@ -487,29 +563,17 @@ def main():
     reasoning_agent = ReasoningAgent()
     safety_checks = SafetyChecks()
     
-    print("✅ Reasoning System Ready")
-    print("Type 'exit' to quit")
+    # Get mode from command line argument
+    mode = sys.argv[1] if len(sys.argv) > 1 else "interactive"
     
-    while True:
-        try:
-            user_input = input("\n🤔 Enter reasoning query: ")
-            
-            if user_input.lower() == 'exit':
-                print("👋 Shutting down Reasoning System...")
-                break
-                
-            # Process the reasoning query
-            if safety_checks.verify_input(user_input):
-                result = reasoning_assistant.process_query(user_input)
-                print(f"\n📝 Reasoning Output: {result}")
-            else:
-                print("⚠️ Invalid input detected. Please try again.")
-                
-        except KeyboardInterrupt:
-            print("\n👋 Shutting down Reasoning System...")
-            break
-        except Exception as e:
-            print(f"⚠️ Error: {str(e)}")
+    if mode == "interactive":
+        interactive_mode(reasoning_assistant, reasoning_agent, safety_checks)
+    elif mode == "simulate":
+        simulate_mode(reasoning_assistant, reasoning_agent)
+    elif mode == "review":
+        review_mode(reasoning_assistant)
+    else:
+        print(f"⚠️ Unknown mode: {mode}")
 
 if __name__ == "__main__":
     main()

@@ -230,8 +230,24 @@ display_main_menu
 while true; do
     read -r command
     case $command in
+        "reason")
+            python reasoning/src/reasoning_bot/main.py interactive
+            display_main_menu
+            ;;
+        "simulate")
+            python reasoning/src/reasoning_bot/main.py simulate
+            display_main_menu
+            ;;
+        "review")
+            python reasoning/src/reasoning_bot/main.py review
+            display_main_menu
+            ;;
         "settings")
             display_settings
+            display_main_menu
+            ;;
+        "help")
+            display_help
             display_main_menu
             ;;
         "exit")
@@ -239,7 +255,8 @@ while true; do
             exit 0
             ;;
         *)
-            # Handle other commands...
+            echo -e "${YELLOW}Invalid command. Please try again.${RESET}"
+            display_main_menu
             ;;
     esac
 done
