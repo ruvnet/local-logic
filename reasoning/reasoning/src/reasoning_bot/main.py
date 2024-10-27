@@ -5,14 +5,34 @@ from colorama import init, Fore, Style
 
 init(autoreset=True)  # Initialize colorama
 
-def get_continue_choice():
+def interactive_mode(assistant, agent, safety_checks):
+    print("\n🧠 Starting Interactive Reasoning Session...")
+    print("Type 'exit' to quit")
+    print("\n💡 TIP: Be specific in your queries for better analysis")
+    
     while True:
-        choice = input(f"\n{Fore.YELLOW}Would you like to analyze another query? (y/n): {Style.RESET_ALL}").lower()
-        if choice in ['y', 'n']:
-            return choice == 'y'
-        print(f"{Fore.RED}Please enter 'y' for yes or 'n' for no.{Style.RESET_ALL}")
-
-def provide_situation_advice(hand, position, pot_size, stack_size, opponent_stack, game_type, opponent_tendency):
+        try:
+            user_input = input("\n🤔 Enter reasoning query: ")
+            
+            if user_input.lower() == 'exit':
+                print("👋 Ending reasoning session...")
+                break
+                
+            if safety_checks.verify_input(user_input):
+                print("\n⚡ Processing query...")
+                result = assistant.process_query(user_input)
+                print(f"\n📝 Reasoning Analysis:")
+                print(f"🔍 {result}")
+                print("\n💭 Additional insights available. Type 'more' for detailed analysis.")
+            else:
+                print("⚠️ Invalid input detected. Please try again.")
+                print("💡 TIP: Ensure your query is clear and well-formed")
+                
+        except KeyboardInterrupt:
+            print("\n👋 Ending reasoning session...")
+            break
+        except Exception as e:
+            print(f"⚠️ Error: {str(e)}")
     """Provide situational advice based on current game state"""
     print(f"\n{Fore.YELLOW}💡 SITUATIONAL ADVICE:")
     
@@ -384,19 +404,44 @@ def handle_command(command):
 
 def main():
     print("🧠 Initializing Reasoning System Components...")
-    print_instructions()
-    print_position_guide()
     
-    while True:
-        display_main_menu()
-        command = input().lower().strip()
-        
-        if command == "play":
-            break
-        result = handle_command(command)
-        if not result:
-            print(f"\n{Fore.YELLOW}Thank you for using the Poker AI Training System!{Style.RESET_ALL}")
-            break
+    # Initialize core components
+    reasoning_assistant = ReasoningAssistant()
+    reasoning_agent = ReasoningAgent()
+    safety_checks = SafetyChecks()
+    
+    print("\n📚 REASONING SYSTEM GUIDE:")
+    print("Enter queries in natural language to analyze:")
+    print("• Logical problems and scenarios")
+    print("• Decision analysis requests") 
+    print("• Pattern recognition tasks")
+    print("• Complex reasoning chains")
+    
+    print("\n🔍 QUERY EXAMPLES:")
+    print("• Analyze the implications of [scenario]")
+    print("• Evaluate the relationship between [A] and [B]")
+    print("• Consider the logical consequences of [action]")
+    print("• Determine the optimal approach for [situation]")
+    
+    print("\n⚡ REASONING MODES:")
+    print("• Deductive: Step-by-step logical analysis")
+    print("• Inductive: Pattern-based reasoning")
+    print("• Abductive: Best explanation inference")
+    print("• Analogical: Comparison-based reasoning")
+    
+    print("\n============================================================")
+    
+    # Get mode from command line argument
+    mode = sys.argv[1] if len(sys.argv) > 1 else "interactive"
+    
+    if mode == "interactive":
+        interactive_mode(reasoning_assistant, reasoning_agent, safety_checks)
+    elif mode == "simulate":
+        simulate_mode(reasoning_assistant, reasoning_agent)
+    elif mode == "review":
+        review_mode(reasoning_assistant)
+    else:
+        print(f"⚠️ Unknown mode: {mode}")
     
     while True:
         print(f"{Fore.GREEN}{'='*60}")
