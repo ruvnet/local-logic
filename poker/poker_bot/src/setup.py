@@ -15,7 +15,13 @@ setup(
         "matplotlib",  # For plotting and visualization
         "openai",  # For OpenAI API integration
         "seaborn",  # For statistical visualization
-        "tqdm"  # For progress bars
+        "tqdm",  # For progress bars
+        "phoenix-ai==0.2.0",  # Phoenix AI package
+        "opentelemetry-api",  # OpenTelemetry support
+        "opentelemetry-sdk",
+        "opentelemetry-instrumentation",
+        "openinference-instrumentation-dspy",
+        "openinference-instrumentation-litellm"
     ],
     python_requires=">=3.8",
 )
