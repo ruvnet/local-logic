@@ -2,6 +2,9 @@ import os
 import json
 import time
 import numpy as np
+from opentelemetry import trace
+from typing import Dict, List, Tuple
+import socket
 from colorama import Fore, Style
 from tqdm import tqdm
 import random
@@ -896,8 +899,21 @@ class PokerTrainer:
         with open(history_path, 'w') as f:
             json.dump(history, f, indent=2)
             
+    def verify_phoenix_connection(self):
+        """Verify Phoenix server connection"""
+        phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
+        phoenix_port = int(os.getenv('PHOENIX_GRPC_PORT', '4317'))
+        
+        try:
+            socket.create_connection((phoenix_host, phoenix_port), timeout=5)
+            print(f"{Fore.GREEN}Phoenix server connection verified.{Style.RESET_ALL}")
+            return True
+        except Exception as e:
+            print(f"{Fore.RED}Phoenix connection failed: {str(e)}{Style.RESET_ALL}")
+            return False
+
     def _display_metrics(self, metrics: Dict):
-        """Display current metrics"""
+        """Display current metrics with proper formatting"""
         print(f"\nEpoch {metrics['epoch']}:")
         print(f"Training Metrics:")
         for metric, value in metrics['train_metrics'].items():

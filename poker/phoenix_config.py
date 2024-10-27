@@ -32,8 +32,17 @@ def init_phoenix(service_name="poker-bot"):
         
         # Set global tracer provider
         trace.set_tracer_provider(tracer_provider)
-        print("Phoenix tracing initialized successfully")
         
+        # Initialize instrumentors
+        try:
+            from openinference.instrumentation.dspy import DSPyInstrumentor
+            from openinference.instrumentation.litellm import LiteLLMInstrumentor
+            DSPyInstrumentor().instrument()
+            LiteLLMInstrumentor().instrument()
+        except ImportError:
+            print("Warning: OpenInference instrumentors not available")
+            
+        print("Phoenix tracing initialized successfully")
         return tracer_provider
     except Exception as e:
         print(f"Error: Failed to initialize Phoenix tracing:")
