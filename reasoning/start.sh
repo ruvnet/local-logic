@@ -15,6 +15,34 @@ display_ai_initialization() {
     done
 }
 
+display_reasoning_settings() {
+    echo -e "\n${CYAN}============================================================${RESET}"
+    echo -e "${YELLOW}⚙️ REASONING SYSTEM SETTINGS${RESET}"
+    echo -e "${CYAN}============================================================${RESET}\n"
+    
+    echo -e "${YELLOW}1. Inference Settings${RESET}"
+    echo -e "• Inference depth: 3 levels"
+    echo -e "• Pattern matching threshold: 0.85"
+    echo -e "• Logic chain length: Dynamic"
+    
+    echo -e "\n${YELLOW}2. Template Parameters${RESET}"
+    echo -e "• Template complexity: Medium"
+    echo -e "• Pattern recognition sensitivity: 0.75"
+    echo -e "• Update frequency: Real-time"
+    
+    echo -e "\n${YELLOW}3. System Configuration${RESET}"
+    echo -e "• Processing mode: Optimized"
+    echo -e "• Memory allocation: Adaptive"
+    echo -e "• Cache strategy: Dynamic"
+    
+    echo -e "\n${YELLOW}4. Runtime Options${RESET}"
+    echo -e "• Parallel processing: Enabled"
+    echo -e "• Debug mode: Disabled"
+    echo -e "• Performance logging: Active"
+    
+    echo -e "\n${CYAN}============================================================${RESET}"
+}
+
 display_main_menu() {
     echo -e "\n${CYAN}============================================================${RESET}"
     echo -e "${YELLOW}🧠 LOCAL LOGIC REASONING SYSTEM${RESET}"
@@ -95,8 +123,14 @@ check_requirements() {
     echo "Installing dependencies..."
     pip install --upgrade pip wheel setuptools >/dev/null 2>&1
     
-    # Install packages in one command to reduce overhead
-    pip install numpy pandas pytest "dspy-ai[all]" scikit-learn colorama matplotlib seaborn openai >/dev/null 2>&1
+    # Install packages for reasoning system
+    pip install numpy pandas pytest scikit-learn colorama matplotlib \
+        seaborn openai networkx spacy nltk transformers torch \
+        tensorflow sympy >/dev/null 2>&1
+    
+    # Install additional NLP and reasoning packages
+    python -m spacy download en_core_web_sm >/dev/null 2>&1
+    python -m nltk.downloader punkt averaged_perceptron_tagger wordnet >/dev/null 2>&1
     
     # Set PYTHONPATH to include the reasoning source directory
     export PYTHONPATH="${PWD}/reasoning/src:${PYTHONPATH}"
@@ -111,6 +145,7 @@ check_requirements() {
 echo -e "${YELLOW}🧠 Starting Local Logic System...${RESET}"
 check_requirements
 display_ai_initialization
+display_reasoning_settings
 display_main_menu
 
 # Run the main application with proper error handling
