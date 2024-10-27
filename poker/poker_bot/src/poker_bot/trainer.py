@@ -616,32 +616,54 @@ class PokerTrainer:
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch with proper metric tracking"""
-        tracer = trace.get_tracer(__name__)
+        """Train for one epoch with efficient caching and local model training"""
+        total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
+        num_batches = 0
         
-        with tracer.start_as_current_span("train_epoch") as span:
-            metrics = {metric: 0.0 for metric in self.evaluator.metrics}
-            num_batches = 0
+        # Initialize response cache if needed
+        if not hasattr(self, 'response_cache'):
+            self.response_cache = {}
+
+        # Process batches
+        for i in tqdm(range(0, len(train_data), self.config.batch_size), desc="Training Batches"):
+            batch = train_data[i:i + self.config.batch_size]
             
-            # Process batches
-            for i in range(0, len(train_data), self.config.batch_size):
-                with tracer.start_as_current_span("batch") as batch_span:
-                    batch = train_data[i:i + self.config.batch_size]
-                    batch_metrics = self._process_batch(batch)
-                    
-                    # Update metrics
-                    for metric, value in batch_metrics.items():
-                        metrics[metric] += value
-                        batch_span.set_attribute(f"batch_{metric}", value)
-                    
-                    num_batches += 1
-            
-            # Average metrics
-            for metric in metrics:
-                metrics[metric] = metrics[metric] / num_batches if num_batches > 0 else 0.0
-                span.set_attribute(f"epoch_{metric}", metrics[metric])
+            # Process each game in batch
+            batch_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
+            for game_state in batch:
+                # Get model prediction
+                prediction = self.agent(
+                    hand=game_state['hand'],
+                    table_cards=game_state['table_cards'],
+                    position=game_state['position'],
+                    pot_size=game_state['pot_size'],
+                    stack_size=game_state['stack_size'],
+                    opponent_stack=game_state['opponent_stack'],
+                    game_type=game_state['game_type'],
+                    opponent_tendency=game_state['opponent_tendency']
+                )
                 
-            return metrics
+                # Calculate metrics
+                metrics = self._calculate_real_metrics(prediction, game_state)
+                for metric in batch_metrics:
+                    batch_metrics[metric] += metrics[metric]
+            
+            # Average batch metrics
+            batch_size = len(batch)
+            for metric in batch_metrics:
+                batch_metrics[metric] /= batch_size
+                total_metrics[metric] += batch_metrics[metric]
+            
+            num_batches += 1
+
+        # Average and clamp total metrics
+        for metric in total_metrics:
+            # Average across batches
+            total_metrics[metric] = total_metrics[metric] / num_batches if num_batches > 0 else 0.0
+            # Clamp between 0 and 1
+            total_metrics[metric] = max(0.0, min(1.0, total_metrics[metric]))
+
+        return total_metrics
 
         # Collect inputs and outputs for local training
         inputs = []
