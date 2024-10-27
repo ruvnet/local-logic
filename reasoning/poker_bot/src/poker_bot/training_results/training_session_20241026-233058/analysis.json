@@ -1,0 +1,55 @@
+{
+  "duration": "2 epochs",
+  "best_epoch": 2,
+  "convergence_rate": 0.0003999999999999976,
+  "metrics_progression": {
+    "win_rate": {
+      "start": 0.2166,
+      "end": 0.21739999999999998,
+      "min": 0.2166,
+      "max": 0.21739999999999998,
+      "improvement": 0.0007999999999999952
+    },
+    "decision_quality": {
+      "start": 0.20800000000000002,
+      "end": 0.20800000000000002,
+      "min": 0.20800000000000002,
+      "max": 0.20800000000000002,
+      "improvement": 0.0
+    },
+    "bluff_efficiency": {
+      "start": 0.3,
+      "end": 0.3,
+      "min": 0.3,
+      "max": 0.3,
+      "improvement": 0.0
+    },
+    "expected_value": {
+      "start": 0.0,
+      "end": 0.0,
+      "min": 0.0,
+      "max": 0.0,
+      "improvement": 0.0
+    }
+  },
+  "performance_summary": {
+    "early_stage": {
+      "win_rate": 0.0,
+      "expected_value": 0.0,
+      "decision_quality": 0.0,
+      "bluff_efficiency": 0.0
+    },
+    "mid_stage": {
+      "win_rate": 0.2166,
+      "expected_value": 0.0,
+      "decision_quality": 0.20800000000000002,
+      "bluff_efficiency": 0.3
+    },
+    "late_stage": {
+      "win_rate": 0.21739999999999998,
+      "expected_value": 0.0,
+      "decision_quality": 0.20800000000000002,
+      "bluff_efficiency": 0.3
+    }
+  }
+}

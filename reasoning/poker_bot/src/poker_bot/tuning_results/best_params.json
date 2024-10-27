@@ -1,0 +1,15 @@
+{
+  "params": {
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "max_tokens": 128,
+    "temperature": 0.5
+  },
+  "metrics": {
+    "win_rate": 0.0,
+    "expected_value": 0.0,
+    "decision_quality": 1.0,
+    "bluff_efficiency": 1.0
+  },
+  "score": 0.0
+}

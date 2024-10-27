@@ -1,0 +1,45 @@
+{
+  "config": {
+    "num_epochs": 1,
+    "batch_size": 2,
+    "learning_rate": 0.001,
+    "validation_interval": 5,
+    "patience": 10,
+    "min_delta": 0.001,
+    "temperature": 0.7,
+    "max_tokens": 256,
+    "shuffle_data": true,
+    "num_simulations": 500
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_metrics": {
+        "win_rate": 0.5385,
+        "expected_value": 0.0,
+        "decision_quality": 0.52,
+        "bluff_efficiency": 0.75
+      },
+      "valid_metrics": {
+        "win_rate": 0.75,
+        "expected_value": 0.5,
+        "decision_quality": 0.8,
+        "bluff_efficiency": 0.6
+      },
+      "timestamp": "2024-10-26 22:54:59"
+    }
+  ],
+  "final_metrics": {
+    "win_rate": 0.75,
+    "expected_value": 0.5,
+    "decision_quality": 0.8,
+    "bluff_efficiency": 0.6
+  },
+  "summary": {
+    "training_duration": "0.12 seconds",
+    "early_stopping_triggered": false,
+    "best_win_rate": 0.75,
+    "final_epoch": 1
+  },
+  "timestamp": "20241026-225459"
+}

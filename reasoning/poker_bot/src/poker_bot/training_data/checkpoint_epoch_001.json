@@ -1,0 +1,17 @@
+{
+  "epoch": 1,
+  "metrics": {
+    "win_rate": 0.0,
+    "expected_value": 0.0,
+    "decision_quality": 1.0,
+    "bluff_efficiency": 1.0
+  },
+  "model_state": {
+    "signature": {
+      "model_config": "{}",
+      "model_fields": "{'hand': FieldInfo(annotation=str, required=False, default='', json_schema_extra={'desc': \"The player's hole cards\", '__dspy_field_type': 'input', 'prefix': 'Hand:'}), 'table_cards': FieldInfo(annotation=str, required=False, default='', json_schema_extra={'desc': 'The community cards on the table', '__dspy_field_type': 'input', 'prefix': 'Table Cards:'}), 'position': FieldInfo(annotation=str, required=False, default='', json_schema_extra={'desc': \"Player's position at the table\", '__dspy_field_type': 'input', 'prefix': 'Position:'}), 'pot_size': FieldInfo(annotation=float, required=False, default=0.0, json_schema_extra={'desc': 'Current size of the pot', '__dspy_field_type': 'input', 'prefix': 'Pot Size:'}), 'stack_size': FieldInfo(annotation=float, required=False, default=0.0, json_schema_extra={'desc': \"Player's remaining stack\", '__dspy_field_type': 'input', 'prefix': 'Stack Size:'}), 'opponent_stack': FieldInfo(annotation=float, required=False, default=0.0, json_schema_extra={'desc': \"Opponent's remaining stack\", '__dspy_field_type': 'input', 'prefix': 'Opponent Stack:'}), 'game_type': FieldInfo(annotation=str, required=False, default='', json_schema_extra={'desc': 'Type of game being played', '__dspy_field_type': 'input', 'prefix': 'Game Type:'}), 'opponent_tendency': FieldInfo(annotation=str, required=False, default='', json_schema_extra={'desc': \"Opponent's playing style and tendencies\", '__dspy_field_type': 'input', 'prefix': 'Opponent Tendency:'}), 'action': FieldInfo(annotation=str, required=False, default='fold', json_schema_extra={'desc': 'Recommended poker action', '__dspy_field_type': 'output', 'prefix': 'Action:'}), 'reasoning': FieldInfo(annotation=str, required=False, default='', json_schema_extra={'desc': 'Explanation for the recommended action', '__dspy_field_type': 'output', 'prefix': 'Reasoning:'})}",
+      "model_computed_fields": "{}"
+    },
+    "state": {}
+  }
+}

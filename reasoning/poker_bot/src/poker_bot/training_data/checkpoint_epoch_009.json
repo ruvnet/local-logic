@@ -1,0 +1,7 @@
+{
+  "epoch": 9,
+  "model_state": null,
+  "metrics": {
+    "accuracy": 0.86
+  }
+}
