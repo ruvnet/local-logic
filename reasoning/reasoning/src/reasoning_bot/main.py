@@ -18,7 +18,7 @@ class ReasoningModule(dspy.Module):
     def __init__(self):
         super().__init__()
         # Correct signature format with input and output fields
-        self.generate_reasoning = dspy.ChainOfThought("question: {input} -> reasoning: {output}")
+        self.generate_reasoning = dspy.ChainOfThought("question: str -> reasoning: str")
     
     def forward(self, input_query):
         try:
