@@ -17,11 +17,16 @@ dspy.configure(
 class ReasoningModule(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.generate_reasoning = dspy.ChainOfThought("question: {input}\nreasoning:")
+        # Correct signature format with input and output fields
+        self.generate_reasoning = dspy.ChainOfThought("question: {input} -> reasoning: {output}")
     
     def forward(self, input_query):
-        result = self.generate_reasoning(input=input_query)
-        return result.reasoning
+        try:
+            result = self.generate_reasoning(input=input_query)
+            return result.output
+        except Exception as e:
+            print(f"⚠️ Reasoning error: {str(e)}")
+            return "Unable to process reasoning chain. Please try rephrasing your query."
 
 def interactive_mode(assistant, agent, safety_checks):
     print("\n🧠 Starting Interactive Reasoning Session...")
