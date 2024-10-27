@@ -533,45 +533,16 @@ class PokerTrainer:
 
     def train(self, config: TrainingConfig = None):
         """Train the model with comprehensive result tracking"""
-        
-        # Check Phoenix availability first
-        def check_phoenix_available():
-            import socket
-            phoenix_host = os.getenv('PHOENIX_HOST', 'phoenix')
-            phoenix_port = int(os.getenv('PHOENIX_GRPC_PORT', '4317'))
+        if config:
+            self.config = config
             
-            try:
-                # Try to connect to Phoenix
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)  # 5 second timeout
-                result = sock.connect_ex((phoenix_host, phoenix_port))
-                sock.close()
-                return result == 0
-            except Exception as e:
-                print(f"Error checking Phoenix availability: {str(e)}")
-                return False
-
-        # Wait for Phoenix to be available
-        max_retries = 30
-        retry_count = 0
-        while not check_phoenix_available() and retry_count < max_retries:
-            if retry_count == 0:
-                print("Waiting for Phoenix to be available...")
-            print(".", end="", flush=True)
-            time.sleep(1)
-            retry_count += 1
-        
-        if retry_count >= max_retries:
-            print("\nError: Phoenix is not available. Please ensure Phoenix is running.")
-            return None
-        
-        if retry_count > 0:
-            print("\nPhoenix is available!")
-
         tracer = trace.get_tracer(__name__)
+        
         with tracer.start_as_current_span("training_session") as span:
+            # Set training configuration attributes
             span.set_attribute("num_epochs", self.config.num_epochs)
             span.set_attribute("batch_size", self.config.batch_size)
+            span.set_attribute("learning_rate", self.config.learning_rate)
         if config:
             self.config = config
 
@@ -645,15 +616,32 @@ class PokerTrainer:
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch with proper tracing"""
+        """Train for one epoch with proper metric tracking"""
         tracer = trace.get_tracer(__name__)
+        
         with tracer.start_as_current_span("train_epoch") as span:
-            total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
+            metrics = {metric: 0.0 for metric in self.evaluator.metrics}
             num_batches = 0
-
-        # Cache to store LLM responses
-        if not hasattr(self, 'response_cache'):
-            self.response_cache = {}
+            
+            # Process batches
+            for i in range(0, len(train_data), self.config.batch_size):
+                with tracer.start_as_current_span("batch") as batch_span:
+                    batch = train_data[i:i + self.config.batch_size]
+                    batch_metrics = self._process_batch(batch)
+                    
+                    # Update metrics
+                    for metric, value in batch_metrics.items():
+                        metrics[metric] += value
+                        batch_span.set_attribute(f"batch_{metric}", value)
+                    
+                    num_batches += 1
+            
+            # Average metrics
+            for metric in metrics:
+                metrics[metric] = metrics[metric] / num_batches if num_batches > 0 else 0.0
+                span.set_attribute(f"epoch_{metric}", metrics[metric])
+                
+            return metrics
 
         # Collect inputs and outputs for local training
         inputs = []

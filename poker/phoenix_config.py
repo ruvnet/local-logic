@@ -12,43 +12,33 @@ def init_phoenix(service_name="poker-bot"):
         phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
         endpoint = f"http://{phoenix_host}:{phoenix_port}"
         
-        print(f"Initializing Phoenix tracing for {service_name}")
-        print(f"Using endpoint: {endpoint}")
-        
-        # Create OTLP exporter with proper configuration
+        # Create OTLP exporter
         otlp_exporter = OTLPSpanExporter(
             endpoint=endpoint,
-            timeout=30,
             insecure=True
         )
         
-        # Create TracerProvider with resource attributes
+        # Create and configure TracerProvider
         tracer_provider = TracerProvider()
-        tracer_provider.add_span_processor(BatchSpanProcessor(
-            otlp_exporter,
-            max_export_batch_size=512,
-            schedule_delay_millis=5000
-        ))
+        tracer_provider.add_span_processor(
+            BatchSpanProcessor(otlp_exporter)
+        )
         
         # Set global tracer provider
         trace.set_tracer_provider(tracer_provider)
         
-        # Initialize instrumentors
+        # Initialize DSPy instrumentation
         try:
             from openinference.instrumentation.dspy import DSPyInstrumentor
-            from openinference.instrumentation.litellm import LiteLLMInstrumentor
             DSPyInstrumentor().instrument()
-            LiteLLMInstrumentor().instrument()
         except ImportError:
-            print("Warning: OpenInference instrumentors not available")
+            print("Warning: DSPy instrumentation not available")
             
-        print("Phoenix tracing initialized successfully")
+        print(f"Phoenix tracing initialized successfully at {endpoint}")
         return tracer_provider
+        
     except Exception as e:
-        print(f"Error: Failed to initialize Phoenix tracing:")
-        print(f"  Type: {type(e).__name__}")
-        print(f"  Message: {str(e)}")
-        print("Continuing without tracing...")
+        print(f"Error initializing Phoenix tracing: {str(e)}")
         return None
 
 def get_tracer(name):
