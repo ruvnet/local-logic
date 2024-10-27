@@ -1,7 +1,7 @@
 #!/bin/bash
 
 display_ai_initialization() {
-    echo -e "\n🤖 Initializing Poker AI System..."
+    echo -e "\n🤖 Initializing Reasoning System..."
     sleep 0.5
     for step in "Loading neural network..." "Calibrating decision matrices..." "Ready!"; do
         echo -ne "⚡ $step\r"
@@ -27,17 +27,17 @@ check_requirements() {
     pip install numpy pandas treys pytest "dspy-ai[all]" scikit-learn colorama matplotlib seaborn openai >/dev/null 2>&1
     
     # Set PYTHONPATH
-    export PYTHONPATH="${PYTHONPATH}:/workspaces/agentic-desktop/poker/poker_bot/src"
+    export PYTHONPATH="${PYTHONPATH}:/workspaces/agentic-desktop/reasoning/reasoning/src"
     
     # Install the package in development mode
-    cd /workspaces/agentic-desktop/poker/poker_bot/src
+    cd /workspaces/agentic-desktop/reasoning/reasoning/src
     pip install -e . >/dev/null 2>&1
 }
 
 # Main execution
-echo "🎲 Starting Poker Bot..."
+echo "🧠 Starting Reasoning System..."
 check_requirements
 display_ai_initialization
 
 # Run the main application
-python /workspaces/agentic-desktop/poker/poker_bot/src/poker_bot/main.py
+python /workspaces/agentic-desktop/reasoning/reasoning/src/reasoning_bot/main.py
