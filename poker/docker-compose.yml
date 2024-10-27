@@ -12,19 +12,19 @@ services:
     networks:
       - poker-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6006/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
+      test: ["CMD-SHELL", "curl -f http://localhost:6006/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    environment:
+      - PHOENIX_LOG_LEVEL=debug
+      - PHOENIX_TELEMETRY_ENABLED=true
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-    environment:
-      - PHOENIX_LOG_LEVEL=debug
-      - PHOENIX_TELEMETRY_ENABLED=true
 
   poker_bot:
     container_name: poker_bot
@@ -39,6 +39,7 @@ services:
     depends_on:
       phoenix:
         condition: service_healthy
+        restart: true
     volumes:
       - ./poker_bot/src/poker_bot:/app/poker_bot
       - ./data:/app/data
