@@ -10,7 +10,29 @@ from poker_bot.hyperparameter_tuner import HyperparameterTuner
 import dspy
 from dspy.evaluate import Evaluate
 from typing import List, Dict, Tuple
-from opentelemetry import trace
+
+# Make OpenTelemetry optional
+try:
+    from opentelemetry import trace
+    HAS_OPENTELEMETRY = True
+except ImportError:
+    HAS_OPENTELEMETRY = False
+    print("Warning: OpenTelemetry not available. Continuing without tracing...")
+    
+    # Create dummy trace class
+    class DummyTracer:
+        def start_as_current_span(self, name):
+            class DummySpan:
+                def __enter__(self): return self
+                def __exit__(self, *args): pass
+                def set_attribute(self, *args): pass
+            return DummySpan()
+            
+    class DummyTrace:
+        def get_tracer(self, name):
+            return DummyTracer()
+            
+    trace = DummyTrace()
 
 try:
     from phoenix.otel import register
@@ -312,14 +334,14 @@ class PokerEvaluator(dspy.Evaluate):
 
 class PokerTrainer:
     def __init__(self):
-        if HAS_PHOENIX:
+        if HAS_PHOENIX and HAS_OPENTELEMETRY:
             # Initialize Phoenix tracing
             tracer_provider = register(
                 project_name="poker-bot",
                 endpoint="http://localhost:4317"
             )
             
-            # Initialize instrumentors
+            # Initialize instrumentors if available
             try:
                 from openinference.instrumentation.dspy import DSPyInstrumentor
                 from openinference.instrumentation.litellm import LiteLLMInstrumentor
