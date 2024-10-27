@@ -343,11 +343,10 @@ class PokerTrainer:
             print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
         
             try:
-                # Register with correct endpoint
+                # Register with correct parameters
                 tracer_provider = register(
                     project_name="poker-bot",
-                    endpoint=endpoint,
-                    insecure=True
+                    endpoint=endpoint
                 )
             
                 # Initialize instrumentors if available
