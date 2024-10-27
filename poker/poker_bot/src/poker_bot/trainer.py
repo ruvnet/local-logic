@@ -660,7 +660,7 @@ class PokerTrainer:
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch with efficient caching and local model training"""
+        """Train for one epoch with proper tracing"""
         tracer = trace.get_tracer(__name__)
         with tracer.start_as_current_span("train_epoch") as span:
             total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
