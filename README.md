@@ -1,33 +1,39 @@
-# Advanced Poker AI Training System
-## Game Theory Optimization & Machine Learning Framework
+# 🧠 LLM Training Compiler - A Novel Approach to Local Language Model Training
+> Transform traditional epoch-based training into compiled prompt systems for efficient LLM tuning
 
-A sophisticated poker training system that combines game theory optimal (GTO) play with adaptive learning strategies using DSPy and advanced AI techniques. This system helps players improve their decision-making through real-time analysis and adaptive learning.
+## Revolutionary Training Paradigm
 
-## 📊 System Architecture
+```mermaid
+graph TD
+    A[Traditional Training] --> B[Compilation Layer]
+    B --> C[Prompt Engineering]
+    B --> D[Pattern Extraction]
+    B --> E[Optimization Rules]
+    C --> F[Template Generation]
+    D --> G[Response Analysis]
+    E --> H[Performance Metrics]
+    F & G & H --> I[Compiled Training System]
+    I --> J[Local LLM]
+    J --> K[Optimized Model]
+    K --> L[Inference Engine]
+```
 
-![System Architecture](assets/architecture.png)
+## What Makes This Different
 
-Key components:
-- Decision Engine
-- Training Framework 
-- Analysis Tools
-- Safety Checks
+Traditional LLM training requires massive computational resources and direct model weight adjustments. Our approach introduces a compilation layer that transforms conventional training patterns into optimized prompt systems.
 
-## 📈 Performance Metrics
+### The Compilation Advantage
 
-![Training Progress](assets/training_progress.png)
-- Win rate over time
-- EV calculations
-- Decision quality trends
-
-## 🎯 System Overview
-
-The Poker AI Training System is designed to:
-- Analyze hand situations in real-time
-- Provide GTO-based recommendations
-- Adapt to different playing styles
-- Learn from player decisions
-- Optimize strategies based on position and stack depth
+```mermaid
+flowchart LR
+    A[Training Data] --> B[Compiler]
+    B --> C[Pattern Analysis]
+    C --> D[Prompt Templates]
+    D --> E[Response Rules]
+    E --> F[Optimization Layer]
+    F --> G[Local Model]
+    G --> A
+```
 
 ## 🎯 Features
 
