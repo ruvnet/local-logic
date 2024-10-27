@@ -7,13 +7,11 @@ setup(
     install_requires=[
         "numpy",  # For numerical operations
         "pandas",  # For data manipulation
-        "dspy-ai[all]",  # For DSPy functionality
         "scikit-learn",  # For machine learning
         "colorama",  # For colored terminal output
         "matplotlib",  # For visualization
         "seaborn",  # For statistical plots
         "openai",  # For OpenAI integration
-        "tqdm"  # For progress bars
     ],
     python_requires=">=3.8",
 )

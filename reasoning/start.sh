@@ -143,13 +143,6 @@ check_requirements() {
         ["matplotlib"]="matplotlib"
         ["seaborn"]="seaborn"
         ["openai"]="openai"
-        ["networkx"]="networkx"
-        ["spacy"]="spacy"
-        ["nltk"]="nltk"
-        ["transformers"]="transformers"
-        ["torch"]="torch"
-        ["tensorflow"]="tensorflow"
-        ["sympy"]="sympy"
     )
 
     # Check and install missing packages
@@ -164,19 +157,6 @@ check_requirements() {
     if [ ${#missing_packages[@]} -ne 0 ]; then
         echo "Installing missing packages: ${missing_packages[*]}"
         pip install "${missing_packages[@]}" >/dev/null 2>&1
-    else
-        echo "All Python packages already installed"
-    fi
-
-    # Install additional NLP models only if not present
-    if package_installed "spacy" && ! python -c "import spacy; spacy.load('en_core_web_sm')" 2>/dev/null; then
-        echo "Installing spaCy English model..."
-        python -m spacy download en_core_web_sm >/dev/null 2>&1
-    fi
-
-    if package_installed "nltk" && ! python -c "import nltk.data; nltk.data.find('tokenizers/punkt')" 2>/dev/null; then
-        echo "Installing NLTK data..."
-        python -m nltk.downloader -q punkt averaged_perceptron_tagger wordnet
     fi
 
     # Set PYTHONPATH
@@ -184,7 +164,6 @@ check_requirements() {
 
     # Only install in development mode if not already installed
     if ! pip_package_installed "reasoning-bot"; then
-        echo "Installing package in development mode..."
         cd reasoning/src
         pip install -e . >/dev/null 2>&1
         cd ../..
