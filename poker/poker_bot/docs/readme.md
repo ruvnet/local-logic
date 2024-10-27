@@ -261,3 +261,193 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 - Testing requirements
 - Pull request process
 - Development setup
+# Poker Bot Documentation
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[User Input] --> B[Poker Assistant]
+    B --> C[Hand Evaluator]
+    B --> D[Position Strategy]
+    B --> E[Opponent Model]
+    C & D & E --> F[Decision Engine]
+    F --> G[Action Recommendation]
+    F --> H[Reasoning]
+```
+
+## Training Flow
+
+```mermaid
+graph LR
+    A[Training Data] --> B[Hyperparameter Tuning]
+    B --> C[Model Training]
+    C --> D[Evaluation]
+    D -->|Metrics| E[Performance Analysis]
+    E -->|Adjustments| B
+```
+
+## Decision Process
+
+```mermaid
+flowchart TD
+    A[Input Hand] --> B{Hand Strength}
+    B -->|Strong| C[Calculate Raise Size]
+    B -->|Medium| D{Position Check}
+    B -->|Weak| E{Stack Size Check}
+    D -->|Good| F[Consider Raise]
+    D -->|Bad| G[Consider Fold]
+    E -->|Deep| H[Bluff Potential]
+    E -->|Short| I[Fold]
+```
+
+## Data Flow
+
+```mermaid
+graph LR
+    A[Game State] --> B[Feature Extraction]
+    B --> C[Model Input]
+    C --> D[Decision Engine]
+    D --> E[Action Selection]
+    E --> F[Results]
+    F -->|Feedback| G[Training Loop]
+```
+
+## Getting Started
+
+### 1. Installation
+```bash
+pip install poker-bot
+```
+
+### 2. Basic Usage
+```python
+from poker_bot import PokerAgent
+
+agent = PokerAgent()
+action, reasoning = agent.get_decision(
+    hand="AH KH",
+    position="BTN",
+    stack_size=1000
+)
+```
+
+### 3. Training Setup
+```python
+from poker_bot import PokerTrainer
+from poker_bot.config import TrainingConfig
+
+config = TrainingConfig(
+    num_epochs=100,
+    batch_size=32,
+    learning_rate=0.001
+)
+
+trainer = PokerTrainer()
+trainer.train(config)
+```
+
+## Configuration Examples
+
+### Tournament Mode
+```python
+config = TrainingConfig(
+    temperature=0.4,  # More conservative
+    num_simulations=2000,  # Higher accuracy
+    patience=20  # Allow more convergence time
+)
+```
+
+### Cash Game Mode
+```python
+config = TrainingConfig(
+    temperature=0.7,  # More aggressive
+    learning_rate=0.01,  # Faster adaptation
+    batch_size=16  # Quick updates
+)
+```
+
+## Decision Trees
+
+### Preflop Decisions
+```mermaid
+graph TD
+    A[Hand Range] --> B{Position?}
+    B -->|Early| C[Tight Range]
+    B -->|Late| D[Wide Range]
+    C --> E{Premium Hand?}
+    D --> F{Stack Size?}
+    E -->|Yes| G[Raise]
+    E -->|No| H[Fold]
+    F -->|Deep| I[Consider 3-bet]
+    F -->|Short| J[Push/Fold]
+```
+
+### Postflop Decisions
+```mermaid
+graph TD
+    A[Board Texture] --> B{Hand Strength}
+    B -->|Strong| C[Value Betting]
+    B -->|Draw| D[Pot Odds]
+    B -->|Weak| E[Bluff Potential]
+    C --> F[Size Selection]
+    D --> G[Continue/Fold]
+    E --> H[Bluff Frequency]
+```
+
+## Troubleshooting Guide
+
+### Common Issues
+
+1. **Poor Performance**
+   - Check training data quality
+   - Verify hyperparameters
+   - Monitor convergence
+   - Review validation metrics
+
+2. **Memory Issues**
+   - Reduce batch size
+   - Decrease simulation count
+   - Optimize data loading
+   - Clear cache regularly
+
+3. **Unstable Training**
+   - Lower learning rate
+   - Increase batch size
+   - Adjust temperature
+   - Check data distribution
+
+### Performance Optimization
+
+1. **Speed**
+   - Use batch processing
+   - Enable GPU acceleration
+   - Optimize simulation count
+   - Cache frequent calculations
+
+2. **Accuracy**
+   - Increase training data
+   - Fine-tune hyperparameters
+   - Implement cross-validation
+   - Monitor overfitting
+
+3. **Memory**
+   - Stream large datasets
+   - Clear unused objects
+   - Profile memory usage
+   - Optimize data structures
+
+## Additional Resources
+
+- [Hyperparameter Documentation](hyperparameters.md)
+- [Training Guide](training.md)
+- [Evaluation Methods](evaluation.md)
+- [API Reference](api_reference.md)
+
+## Contributing
+
+Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
