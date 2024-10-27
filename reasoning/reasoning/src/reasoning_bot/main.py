@@ -1,13 +1,13 @@
-from poker_bot.poker_assistant import PokerAssistant
-from poker_bot.config import OPENAI_API_KEY
-from colorama import init, Fore, Back, Style
-import re
+from reasoning_bot.reasoning_assistant import ReasoningAssistant
+from reasoning_bot.reasoning_agent import ReasoningAgent
+from reasoning_bot.safety_checks import SafetyChecks
+from colorama import init, Fore, Style
 
 init(autoreset=True)  # Initialize colorama
 
 def get_continue_choice():
     while True:
-        choice = input(f"\n{Fore.YELLOW}Would you like to analyze another hand? (y/n): {Style.RESET_ALL}").lower()
+        choice = input(f"\n{Fore.YELLOW}Would you like to analyze another query? (y/n): {Style.RESET_ALL}").lower()
         if choice in ['y', 'n']:
             return choice == 'y'
         print(f"{Fore.RED}Please enter 'y' for yes or 'n' for no.{Style.RESET_ALL}")
