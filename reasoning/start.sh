@@ -26,23 +26,23 @@ check_requirements() {
     # Install packages in one command to reduce overhead
     pip install numpy pandas pytest "dspy-ai[all]" scikit-learn colorama matplotlib seaborn openai >/dev/null 2>&1
     
-    # Set PYTHONPATH to include the reasoning source directory
-    export PYTHONPATH="${PYTHONPATH}:${PWD}/reasoning/reasoning/src"
+    # Set PYTHONPATH correctly
+    export PYTHONPATH="${PWD}/src:${PYTHONPATH}"
     
     # Install the package in development mode
-    if [ -f "reasoning/reasoning/src/setup.py" ]; then
-        cd reasoning/reasoning/src
+    if [ -f "src/setup.py" ]; then
+        cd src
         pip install -e . >/dev/null 2>&1
-        cd ../../..
+        cd ..
     fi
 }
 
 # Create necessary directories if they don't exist
 create_directories() {
-    mkdir -p reasoning/reasoning/src/reasoning_bot
-    mkdir -p reasoning/reasoning/src/reasoning_bot/models
-    mkdir -p reasoning/reasoning/src/reasoning_bot/data
-    mkdir -p reasoning/reasoning/src/reasoning_bot/config
+    mkdir -p src/reasoning_bot
+    mkdir -p src/reasoning_bot/models
+    mkdir -p src/reasoning_bot/data
+    mkdir -p src/reasoning_bot/config
 }
 
 # Main execution
@@ -52,7 +52,7 @@ check_requirements
 display_ai_initialization
 
 # Run the main application with proper error handling
-if python reasoning/reasoning/src/reasoning_bot/main.py; then
+if python src/reasoning_bot/main.py; then
     echo "✅ Reasoning System completed successfully"
 else
     echo "❌ Reasoning System encountered an error"
