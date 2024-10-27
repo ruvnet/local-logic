@@ -274,21 +274,21 @@ class PokerEvaluator(dspy.Evaluate):
         
         # Position-based decisions
         if position == 'BTN' and hand_strength > 0.5 and action.lower() == 'raise':
-            score = 1.0
+            score += 0.3
         elif position == 'SB' and hand_strength > 0.7 and action.lower() == 'raise':
-            score = 1.0
+            score += 0.3
+            
         # Pot odds based decisions    
-        elif hand_strength > pot_odds and action.lower() in ['call', 'raise']:
-            score = 0.8
+        if hand_strength > pot_odds and action.lower() in ['call', 'raise']:
+            score += 0.2
         elif hand_strength < pot_odds and action.lower() == 'fold':
-            score = 0.8
+            score += 0.2
+            
         # Hand strength based decisions
-        elif hand_strength > 0.7 and action.lower() == 'raise':
-            score = 0.9
+        if hand_strength > 0.7 and action.lower() == 'raise':
+            score += 0.3
         elif hand_strength < 0.3 and action.lower() == 'fold':
-            score = 0.7
-        else:
-            score = 0.5
+            score += 0.2
             
         # Ensure score is between 0 and 1
         return max(0.0, min(1.0, score))
@@ -717,9 +717,12 @@ class PokerTrainer:
             for metric, value in metrics.items():
                 total_metrics[metric] += value
 
-        # Average metrics
+        # Average and clamp metrics
         for metric in total_metrics:
-            total_metrics[metric] /= (num_batches * self.config.batch_size)
+            # First average
+            avg_value = total_metrics[metric] / (num_batches * self.config.batch_size)
+            # Then clamp between 0 and 1 before converting to percentage
+            total_metrics[metric] = max(0.0, min(1.0, avg_value))
 
         return total_metrics
     
