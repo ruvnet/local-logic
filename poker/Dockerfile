@@ -41,11 +41,17 @@ RUN pip install --no-cache-dir \
     openinference-instrumentation-litellm \
     arize-phoenix-otel
 
-# Copy scripts and application code
+# Copy scripts and config first
 COPY scripts/ /app/scripts/
 COPY phoenix_config.py /app/phoenix_config.py
-COPY poker_bot/src/poker_bot ./poker_bot
 RUN chmod +x /app/scripts/*.sh
+
+# Copy and install poker_bot package last to ensure we get the latest setup.py
+COPY poker_bot/ /app/poker_bot/
+WORKDIR /app/poker_bot/src
+RUN pip install -e .
+
+WORKDIR /app
 
 # Final stage
 FROM python:3.10-slim
@@ -71,24 +77,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 COPY --from=builder /app/poker_bot ./poker_bot
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/phoenix_config.py ./phoenix_config.py
 
-# Copy scripts and config
-COPY scripts/ /app/scripts/
-COPY phoenix_config.py /app/phoenix_config.py
-RUN chmod +x /app/scripts/*.sh
-
-# Set ownership
-RUN chown -R poker:poker /app
+# Set ownership and permissions
+RUN chown -R poker:poker /app && \
+    chmod -R 755 /app/poker_bot/src/poker_bot
 
 # Switch to non-root user
 USER poker
+
+# Set working directory to where main.py is located
+WORKDIR /app/poker_bot/src/poker_bot
 
 # Environment variables
 ENV PHOENIX_HOST=phoenix \
     PHOENIX_PORT=6006 \
     PHOENIX_GRPC_PORT=4317 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app/poker_bot/src
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -96,5 +103,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
         nc -z $PHOENIX_HOST $PHOENIX_GRPC_PORT && \
         python -c "import poker_bot; print('Health check passed')" || exit 1
 
-# Set command
-CMD ["/app/scripts/start.sh"]
+# Keep container running
+CMD ["tail", "-f", "/dev/null"]

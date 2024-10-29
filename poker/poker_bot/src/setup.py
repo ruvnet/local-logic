@@ -4,7 +4,6 @@ setup(
     name="poker_bot",
     version="0.1.0",
     packages=find_namespace_packages(include=['poker_bot*']),
-    package_dir={'': 'src'},
     install_requires=[
         "numpy",  # For numerical operations
         "pandas",  # For data manipulation
@@ -17,7 +16,6 @@ setup(
         "openai",  # For OpenAI API integration
         "seaborn",  # For statistical visualization
         "tqdm",  # For progress bars
-        "phoenix-ai>=0.2.0",  # Phoenix AI package
         "opentelemetry-api",  # OpenTelemetry support
         "opentelemetry-sdk",
         "opentelemetry-instrumentation",
