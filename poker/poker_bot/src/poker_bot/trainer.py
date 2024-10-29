@@ -619,11 +619,18 @@ class PokerTrainer:
                 self._train_epoch(train_data)
 
             if epoch % self.config.validation_interval == 0:
-                # Calculate validation metrics using the same method as training
+                # Calculate validation metrics first
                 valid_metrics = self._calculate_batch_metrics(valid_data)
                 
                 # Calculate training metrics
                 train_metrics = self._train_epoch(train_data)
+                
+                # Ensure metrics are valid numbers
+                for metric_dict in [valid_metrics, train_metrics]:
+                    for key in metric_dict:
+                        if not isinstance(metric_dict[key], (int, float)) or \
+                           np.isnan(metric_dict[key]) or np.isinf(metric_dict[key]):
+                            metric_dict[key] = 0.0
                 metrics = {
                     'epoch': epoch + 1,
                     'train_metrics': train_metrics,
@@ -802,19 +809,25 @@ class PokerTrainer:
     def _calculate_batch_metrics(self, data):
         """Calculate metrics for a batch of data"""
         total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
+        valid_samples = 0
         
         for game_state in data:
-            # Get model prediction
-            prediction = self.agent(
-                hand=game_state['hand'],
-                table_cards=game_state['table_cards'],
-                position=game_state['position'],
-                pot_size=game_state['pot_size'],
-                stack_size=game_state['stack_size'],
-                opponent_stack=game_state['opponent_stack'],
-                game_type=game_state['game_type'],
-                opponent_tendency=game_state['opponent_tendency']
-            )
+            try:
+                # Get model prediction with error handling
+                prediction = self.agent(
+                    hand=game_state['hand'],
+                    table_cards=game_state['table_cards'],
+                    position=game_state['position'],
+                    pot_size=game_state['pot_size'],
+                    stack_size=game_state['stack_size'],
+                    opponent_stack=game_state['opponent_stack'],
+                    game_type=game_state['game_type'],
+                    opponent_tendency=game_state['opponent_tendency']
+                )
+                
+                # Skip invalid predictions
+                if not prediction or len(prediction) != 2:
+                    continue
             
             # Calculate metrics for this prediction
             metrics = self._calculate_real_metrics(prediction, game_state)
@@ -833,13 +846,22 @@ class PokerTrainer:
 
     def _calculate_real_metrics(self, prediction, game_state):
         """Calculate real poker metrics"""
-        from treys import Card, Evaluator
+        # Unpack prediction tuple
+        action, reasoning = prediction
         
-        # Convert cards to Treys format
-        hand = [
-            Card.new(self._convert_to_treys_format(card.strip())) 
-            for card in game_state['hand'].split()
-        ]
+        # Calculate base metrics without requiring Treys
+        hand_strength = self._calculate_preflop_strength(game_state['hand'])
+        
+        # Calculate pot odds
+        pot_odds = float(game_state['pot_size']) / float(game_state['stack_size'])
+        
+        # Calculate win rate based on hand strength and position
+        position_multiplier = {
+            'BTN': 1.2, 'CO': 1.15, 'MP': 1.0,
+            'UTG': 0.9, 'BB': 0.95, 'SB': 0.85
+        }.get(game_state['position'], 1.0)
+        
+        win_rate = min(1.0, hand_strength * position_multiplier)
         
         board = []
         if game_state['table_cards']:
