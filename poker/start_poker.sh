@@ -13,12 +13,12 @@ container_running() {
 # Stop any existing containers
 if container_exists "phoenix" || container_exists "poker_bot"; then
     echo "Stopping existing containers..."
-    docker compose down
+    docker compose down > /dev/null 2>&1
 fi
 
 # Start phoenix in the background
 echo "Starting phoenix..."
-docker compose up phoenix -d
+docker compose up phoenix -d > /dev/null 2>&1
 
 # Wait for Phoenix health check
 echo "Waiting for Phoenix to be healthy..."
@@ -41,7 +41,7 @@ done
 
 # Start poker_bot container in the background
 echo "Starting poker_bot container..."
-docker compose up poker_bot -d
+docker compose up poker_bot -d > /dev/null 2>&1
 
 # Wait for poker_bot container to be running
 echo "Waiting for poker_bot container to be ready..."
@@ -67,4 +67,4 @@ sleep 2
 
 # Start an interactive session in the poker_bot container
 echo "Starting poker_bot interface..."
-docker exec -it poker_bot bash -c "cd /app/poker_bot/src/poker_bot && python main.py"
+exec docker exec -it poker_bot bash -c "cd /app/poker_bot/src/poker_bot && python main.py"

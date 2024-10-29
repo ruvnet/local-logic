@@ -2,9 +2,6 @@ import os
 import json
 import time
 import numpy as np
-from opentelemetry import trace
-from typing import Dict, List, Tuple
-import socket
 from colorama import Fore, Style
 from tqdm import tqdm
 import random
@@ -13,39 +10,6 @@ from poker_bot.hyperparameter_tuner import HyperparameterTuner
 import dspy
 from dspy.evaluate import Evaluate
 from typing import List, Dict, Tuple
-
-# Make OpenTelemetry optional
-try:
-    from opentelemetry import trace
-    HAS_OPENTELEMETRY = True
-except ImportError:
-    HAS_OPENTELEMETRY = False
-    print("Warning: OpenTelemetry not available. Continuing without tracing...")
-    
-    # Create dummy trace class
-    class DummyTracer:
-        def start_as_current_span(self, name):
-            class DummySpan:
-                def __enter__(self): return self
-                def __exit__(self, *args): pass
-                def set_attribute(self, *args): pass
-            return DummySpan()
-            
-    class DummyTrace:
-        def get_tracer(self, name):
-            return DummyTracer()
-            
-    trace = DummyTrace()
-
-try:
-    from phoenix.otel import register
-    HAS_PHOENIX = True
-except ImportError:
-    HAS_PHOENIX = False
-    print("Warning: Phoenix not available. Continuing without telemetry...")
-
-    def register(*args, **kwargs):
-        return None
 
 class TrainingConfig:
     """Configuration class for training parameters"""
@@ -141,17 +105,10 @@ class PokerEvaluator(dspy.Evaluate):
         return f"{rank}{suit}"
     
     def evaluate(self, model, eval_data) -> Dict[str, float]:
-        """Evaluate model performance with proper metric calculation"""
-        total_games = len(eval_data)
-        metrics = {
-            'win_rate': 0.0,
-            'expected_value': 0.0,
-            'decision_quality': 0.0,
-            'bluff_efficiency': 0.0
-        }
-
+        results = {metric: 0.0 for metric in self.metrics}
+        
         for game in eval_data:
-            # Get model prediction
+            # Unpack game state to match agent's forward method
             action, reasoning = model(
                 hand=game['hand'],
                 table_cards=game['table_cards'],
@@ -162,71 +119,55 @@ class PokerEvaluator(dspy.Evaluate):
                 game_type=game['game_type'],
                 opponent_tendency=game['opponent_tendency']
             )
-
-            # Calculate hand strength
-            hand_strength = self._calculate_hand_strength(game['hand'], game['table_cards'])
             
-            # Calculate pot odds
-            pot_odds = float(game['pot_size']) / float(game['stack_size'])
-
-            # Calculate individual metrics
-            metrics['win_rate'] += self._calculate_win_probability(action, hand_strength, game['position'])
-            metrics['expected_value'] += self._calculate_ev(action, game['pot_size'], hand_strength)
-            metrics['decision_quality'] += self.evaluate_decision_quality(action, hand_strength, game['position'], pot_odds)
-            metrics['bluff_efficiency'] += self.evaluate_bluff_efficiency(action, hand_strength, game['opponent_tendency'])
-
-        # Average the metrics and ensure they're between 0 and 1
-        for metric in metrics:
-            metrics[metric] = max(0.0, min(1.0, metrics[metric] / total_games))
-
-        return metrics
+            # Calculate various metrics
+            results["win_rate"] += self.calculate_win_rate(action, game)
+            results["expected_value"] += self.calculate_ev(action, game)
+            results["decision_quality"] += self.evaluate_decision_quality(action, game)
+            results["bluff_efficiency"] += self.evaluate_bluff_efficiency(action, game)
+        
+        # Average the results
+        for metric in results:
+            results[metric] /= len(eval_data)
+            
+        return results
     
-    def _calculate_win_probability(self, action, hand_strength, position):
-        """Calculate win probability based on action and hand strength"""
+    def calculate_win_rate(self, prediction, game):
+        """Calculate actual win rate based on hand strength and action"""
+        from treys import Card, Evaluator
+        
+        # Convert cards to Treys format
+        hand = [Card.new(self._convert_to_treys_format(card.strip())) 
+               for card in game['hand'].split()]
+        board = []
+        if game['table_cards']:
+            board = [Card.new(self._convert_to_treys_format(card.strip())) 
+                    for card in game['table_cards'].split()]
+            
+        evaluator = Evaluator()
+        
+        # Calculate base hand strength
+        if board:
+            hand_value = evaluator.evaluate(board, hand)
+            hand_strength = 1.0 - (hand_value / 7462)  # Normalize
+        else:
+            # Preflop hand strength
+            hand_strength = self._calculate_preflop_strength(game['hand'])
+            
+        # Adjust win rate based on action and position
         position_multiplier = {
             'BTN': 1.2, 'CO': 1.15, 'MP': 1.0,
             'UTG': 0.9, 'BB': 0.95, 'SB': 0.85
-        }.get(position, 1.0)
-
+        }.get(game['position'], 1.0)
+        
         action_multiplier = {
             'fold': 0.0,
             'call': 1.0,
             'raise': 1.2,
             'all-in': 1.3
-        }.get(action.lower(), 1.0)
-
-        return min(1.0, hand_strength * position_multiplier * action_multiplier)
-
-    def _calculate_ev(self, action, pot_size, win_prob):
-        """Calculate expected value"""
-        if action.lower() == 'fold':
-            return 0.0
-        elif action.lower() == 'call':
-            return pot_size * (win_prob - (1 - win_prob))
-        elif action.lower() in ['raise', 'all-in']:
-            return pot_size * 2 * (win_prob - (1 - win_prob))
-        return 0.0
-
-    def _calculate_hand_strength(self, hand, table_cards):
-        """Calculate hand strength using card values"""
-        # Simple hand strength calculation
-        hand_cards = hand.split()
-        ranks = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 
-                'T':10, 'J':11, 'Q':12, 'K':13, 'A':14}
+        }.get(prediction.lower(), 1.0)
         
-        # Calculate base strength from hole cards
-        rank1 = ranks.get(hand_cards[0][0], 0)
-        rank2 = ranks.get(hand_cards[1][0], 0)
-        suited = hand_cards[0][1] == hand_cards[1][1]
-        
-        # Base strength calculation
-        strength = (rank1 + rank2) / 28.0  # Normalize by max possible (A+K)
-        if suited:
-            strength *= 1.2
-        if rank1 == rank2:  # Pocket pair
-            strength *= 1.5
-            
-        return min(1.0, strength)
+        return hand_strength * position_multiplier * action_multiplier
         
     def calculate_ev(self, prediction, game):
         """Calculate expected value based on pot odds and win rate"""
@@ -247,59 +188,50 @@ class PokerEvaluator(dspy.Evaluate):
             
         return 0.0
         
-    def evaluate_decision_quality(self, action: str, hand_strength: float, position: str, pot_odds: float) -> float:
+    def evaluate_decision_quality(self, prediction, game):
         """Evaluate decision quality based on GTO principles"""
+        win_rate = self.calculate_win_rate(prediction, game)
+        pot_odds = float(game['pot_size']) / float(game['stack_size'])
+        
         # Basic GTO check
-        score = 0.0
-        
-        # Position-based decisions
-        if position == 'BTN' and hand_strength > 0.5 and action.lower() == 'raise':
-            score += 0.3
-        elif position == 'SB' and hand_strength > 0.7 and action.lower() == 'raise':
-            score += 0.3
+        if win_rate > pot_odds and prediction.lower() in ['call', 'raise']:
+            return 1.0
+        elif win_rate < pot_odds and prediction.lower() == 'fold':
+            return 1.0
+        elif win_rate > 0.7 and prediction.lower() == 'raise':
+            return 1.0
+        elif win_rate < 0.3 and prediction.lower() == 'fold':
+            return 1.0
             
-        # Pot odds based decisions    
-        if hand_strength > pot_odds and action.lower() in ['call', 'raise']:
-            score += 0.2
-        elif hand_strength < pot_odds and action.lower() == 'fold':
-            score += 0.2
+        return 0.5
+        
+    def evaluate_bluff_efficiency(self, prediction, game):
+        """Calculate bluff efficiency based on fold equity and board texture"""
+        win_rate = self.calculate_win_rate(prediction, game)
+        
+        # Only evaluate bluffs
+        if prediction.lower() != 'raise' or win_rate > 0.5:
+            return 1.0
             
-        # Hand strength based decisions
-        if hand_strength > 0.7 and action.lower() == 'raise':
-            score += 0.3
-        elif hand_strength < 0.3 and action.lower() == 'fold':
-            score += 0.2
-            
-        # Ensure score is between 0 and 1
-        return max(0.0, min(1.0, score))
+        # Calculate fold equity based on opponent tendency
+        fold_equity = {
+            'aggressive': 0.2,
+            'passive': 0.4,
+            'tight': 0.6,
+            'loose': 0.3
+        }.get(game['opponent_tendency'].lower(), 0.3)
         
-    def evaluate_bluff_efficiency(self, action: str, hand_strength: float, opponent_tendency: str) -> float:
-        """Evaluate bluffing efficiency"""
-        if action.lower() != 'raise' or hand_strength > 0.5:
-            return 0.5  # Not a bluff, return neutral score
-            
-        # Base bluff score starts at 0.3
-        bluff_score = 0.3
+        # Adjust for position
+        position_bonus = {
+            'BTN': 0.2,
+            'CO': 0.15,
+            'MP': 0.1,
+            'UTG': 0.0,
+            'BB': 0.05,
+            'SB': 0.0
+        }.get(game['position'], 0.0)
         
-        # Adjust based on hand strength (worse hands make better bluffs)
-        bluff_score += max(0.0, 0.4 * (0.5 - hand_strength))
-        
-        # Single opponent tendency adjustment
-        tendency_adjustments = {
-            'aggressive': -0.1,  # Harder to bluff aggressive players
-            'passive': 0.1,      # Easier to bluff passive players
-            'tight': -0.1,       # Harder to bluff tight players
-            'loose': 0.1         # Easier to bluff loose players
-        }
-        
-        # Apply only one adjustment
-        for tendency, adjustment in tendency_adjustments.items():
-            if tendency in opponent_tendency.lower():
-                bluff_score += adjustment
-                break
-                
-        # Ensure return value is between 0 and 1
-        return max(0.0, min(1.0, bluff_score))
+        return min(1.0, fold_equity + position_bonus + (0.5 - win_rate))
         
     def _calculate_preflop_strength(self, hand):
         """Calculate preflop hand strength"""
@@ -380,56 +312,6 @@ class PokerTrainer:
         self.tuner = HyperparameterTuner()
         self.evaluator = PokerEvaluator()
         self.config = TrainingConfig()
-        
-        # Initialize Phoenix optimization configuration
-        self.optimization_config = {
-            'metrics': ['win_rate', 'decision_quality', 'expected_value'],
-            'parameters': {
-                'learning_rate': (0.0001, 0.1),
-                'batch_size': (16, 128),
-                'temperature': (0.1, 1.0)
-            }
-        }
-        
-        # Initialize Phoenix tracing with optimization
-        self.tracer_provider = self._init_phoenix()
-        
-    def _init_phoenix(self):
-        """Initialize Phoenix with optimization capabilities"""
-        if not (HAS_PHOENIX and HAS_OPENTELEMETRY):
-            print("Phoenix or OpenTelemetry not available")
-            return None
-            
-        try:
-            phoenix_host = os.getenv('PHOENIX_HOST', 'localhost')
-            phoenix_port = os.getenv('PHOENIX_GRPC_PORT', '4317')
-            endpoint = f"http://{phoenix_host}:{phoenix_port}"
-            
-            print(f"Initializing Phoenix tracing with endpoint: {endpoint}")
-            
-            # Register tracer provider
-            tracer_provider = register(
-                project_name="poker-bot",
-                endpoint=endpoint
-            )
-            
-            # Initialize instrumentors
-            if not hasattr(self, '_instrumentors_initialized'):
-                try:
-                    from openinference.instrumentation.dspy import DSPyInstrumentor
-                    from openinference.instrumentation.litellm import LiteLLMInstrumentor
-                    DSPyInstrumentor().instrument(tracer_provider=tracer_provider)
-                    LiteLLMInstrumentor().instrument(tracer_provider=tracer_provider)
-                    self._instrumentors_initialized = True
-                except ImportError:
-                    print("Warning: OpenInference instrumentors not available")
-            
-            print("Phoenix optimization initialized successfully")
-            return tracer_provider
-            
-        except Exception as e:
-            print(f"Phoenix optimization initialization error: {str(e)}")
-            return None
         
     def list_checkpoints(self):
         """List all available checkpoints"""
@@ -537,29 +419,8 @@ class PokerTrainer:
         # Add sample hands to training data
         train_data.extend(sample_hands)
         
-        # Create validation data with different scenarios
-        valid_data = [
-            {
-                'hand': "QS QC",  # Pocket queens
-                'table_cards': "AS KS 2D",
-                'position': "BB",
-                'pot_size': 800.0,
-                'stack_size': 2200.0,
-                'opponent_stack': 1900.0,
-                'game_type': "cash",
-                'opponent_tendency': "tight"
-            },
-            {
-                'hand': "JH TD",  # Connected cards
-                'table_cards': "",  # Preflop
-                'position': "CO",
-                'pot_size': 200.0,
-                'stack_size': 2000.0,
-                'opponent_stack': 2100.0,
-                'game_type': "tournament",
-                'opponent_tendency': "loose"
-            }
-        ]
+        # Create validation data (subset of training data for now)
+        valid_data = sample_hands[:1]
         
         return train_data, valid_data
 
@@ -568,24 +429,7 @@ class PokerTrainer:
         self._train_epoch(train_data)
 
     def train(self, config: TrainingConfig = None):
-        """Train the model with comprehensive result tracking and optimization"""
-        if config:
-            self.config = config
-            
-        tracer = trace.get_tracer(__name__)
-        
-        with tracer.start_as_current_span("training_session") as span:
-            # Set training configuration attributes
-            span.set_attribute("num_epochs", self.config.num_epochs)
-            span.set_attribute("batch_size", self.config.batch_size)
-            span.set_attribute("learning_rate", self.config.learning_rate)
-            
-            # Initialize optimization tracking
-            if self.tracer_provider:
-                span.set_attribute("optimization_enabled", True)
-                span.set_attribute("optimization_config", str(self.optimization_config))
-            else:
-                span.set_attribute("optimization_enabled", False)
+        """Train the model with comprehensive result tracking"""
         if config:
             self.config = config
 
@@ -619,18 +463,9 @@ class PokerTrainer:
                 self._train_epoch(train_data)
 
             if epoch % self.config.validation_interval == 0:
-                # Calculate validation metrics first
-                valid_metrics = self._calculate_batch_metrics(valid_data)
-                
-                # Calculate training metrics
+                valid_metrics = self.evaluator.evaluate(self.agent, valid_data)
+
                 train_metrics = self._train_epoch(train_data)
-                
-                # Ensure metrics are valid numbers
-                for metric_dict in [valid_metrics, train_metrics]:
-                    for key in metric_dict:
-                        if not isinstance(metric_dict[key], (int, float)) or \
-                           np.isnan(metric_dict[key]) or np.isinf(metric_dict[key]):
-                            metric_dict[key] = 0.0
                 metrics = {
                     'epoch': epoch + 1,
                     'train_metrics': train_metrics,
@@ -668,61 +503,13 @@ class PokerTrainer:
         return results_dir
         
     def _train_epoch(self, train_data) -> Dict[str, float]:
-        """Train for one epoch with proper tracing and optimization"""
-        tracer = trace.get_tracer(__name__)
+        """Train for one epoch with efficient caching and local model training"""
         total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
         num_batches = 0
-        
-        with tracer.start_as_current_span("train_epoch") as span:
-            # Log training parameters
-            span.set_attribute("batch_size", self.config.batch_size)
-            span.set_attribute("learning_rate", self.config.learning_rate)
-            span.set_attribute("temperature", self.config.temperature)
-        
-        # Initialize response cache if needed
+
+        # Cache to store LLM responses
         if not hasattr(self, 'response_cache'):
             self.response_cache = {}
-
-        # Process batches
-        for i in tqdm(range(0, len(train_data), self.config.batch_size), desc="Training Batches"):
-            batch = train_data[i:i + self.config.batch_size]
-            
-            # Process each game in batch
-            batch_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
-            for game_state in batch:
-                # Get model prediction
-                prediction = self.agent(
-                    hand=game_state['hand'],
-                    table_cards=game_state['table_cards'],
-                    position=game_state['position'],
-                    pot_size=game_state['pot_size'],
-                    stack_size=game_state['stack_size'],
-                    opponent_stack=game_state['opponent_stack'],
-                    game_type=game_state['game_type'],
-                    opponent_tendency=game_state['opponent_tendency']
-                )
-                
-                # Calculate metrics
-                metrics = self._calculate_real_metrics(prediction, game_state)
-                for metric in batch_metrics:
-                    batch_metrics[metric] += metrics[metric]
-            
-            # Average batch metrics
-            batch_size = len(batch)
-            for metric in batch_metrics:
-                batch_metrics[metric] /= batch_size
-                total_metrics[metric] += batch_metrics[metric]
-            
-            num_batches += 1
-
-        # Average and clamp total metrics
-        for metric in total_metrics:
-            # Average across batches
-            total_metrics[metric] = total_metrics[metric] / num_batches if num_batches > 0 else 0.0
-            # Clamp between 0 and 1
-            total_metrics[metric] = max(0.0, min(1.0, total_metrics[metric]))
-
-        return total_metrics
 
         # Collect inputs and outputs for local training
         inputs = []
@@ -770,12 +557,9 @@ class PokerTrainer:
             for metric, value in metrics.items():
                 total_metrics[metric] += value
 
-        # Average and clamp metrics
+        # Average metrics
         for metric in total_metrics:
-            # First average
-            avg_value = total_metrics[metric] / (num_batches * self.config.batch_size)
-            # Then clamp between 0 and 1 before converting to percentage
-            total_metrics[metric] = max(0.0, min(1.0, avg_value))
+            total_metrics[metric] /= (num_batches * self.config.batch_size)
 
         return total_metrics
     
@@ -806,62 +590,15 @@ class PokerTrainer:
             
         return f"{rank}{suit}"
 
-    def _calculate_batch_metrics(self, data):
-        """Calculate metrics for a batch of data"""
-        total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
-        valid_samples = 0
-        
-        for game_state in data:
-            try:
-                # Get model prediction with error handling
-                prediction = self.agent(
-                    hand=game_state['hand'],
-                    table_cards=game_state['table_cards'],
-                    position=game_state['position'],
-                    pot_size=game_state['pot_size'],
-                    stack_size=game_state['stack_size'],
-                    opponent_stack=game_state['opponent_stack'],
-                    game_type=game_state['game_type'],
-                    opponent_tendency=game_state['opponent_tendency']
-                )
-                
-                # Skip invalid predictions
-                if not prediction or len(prediction) != 2:
-                    continue
-            
-            # Calculate metrics for this prediction
-            metrics = self._calculate_real_metrics(prediction, game_state)
-            for metric in total_metrics:
-                total_metrics[metric] += metrics[metric]
-        
-        # Average the metrics
-        num_samples = len(data)
-        if num_samples > 0:
-            for metric in total_metrics:
-                total_metrics[metric] /= num_samples
-                # Clamp between 0 and 1
-                total_metrics[metric] = max(0.0, min(1.0, total_metrics[metric]))
-                
-        return total_metrics
-
     def _calculate_real_metrics(self, prediction, game_state):
         """Calculate real poker metrics"""
-        # Unpack prediction tuple
-        action, reasoning = prediction
+        from treys import Card, Evaluator
         
-        # Calculate base metrics without requiring Treys
-        hand_strength = self._calculate_preflop_strength(game_state['hand'])
-        
-        # Calculate pot odds
-        pot_odds = float(game_state['pot_size']) / float(game_state['stack_size'])
-        
-        # Calculate win rate based on hand strength and position
-        position_multiplier = {
-            'BTN': 1.2, 'CO': 1.15, 'MP': 1.0,
-            'UTG': 0.9, 'BB': 0.95, 'SB': 0.85
-        }.get(game_state['position'], 1.0)
-        
-        win_rate = min(1.0, hand_strength * position_multiplier)
+        # Convert cards to Treys format
+        hand = [
+            Card.new(self._convert_to_treys_format(card.strip())) 
+            for card in game_state['hand'].split()
+        ]
         
         board = []
         if game_state['table_cards']:
@@ -889,20 +626,17 @@ class PokerTrainer:
             game_state['stack_size'],
             hand_strength
         )
-
-        # Calculate pot odds
-        pot_odds = float(game_state['pot_size']) / float(game_state['stack_size'])
         
         return {
             'win_rate': win_rate,
             'expected_value': ev,
-            'decision_quality': self.evaluator.evaluate_decision_quality(
-                prediction[0],  # action
+            'decision_quality': self._evaluate_decision_quality(
+                prediction[0],
                 hand_strength,
                 game_state['position'],
-                pot_odds
+                game_state['pot_size'] / game_state['stack_size']
             ),
-            'bluff_efficiency': self.evaluator.evaluate_bluff_efficiency(
+            'bluff_efficiency': self._evaluate_bluff(
                 prediction[0],
                 hand_strength,
                 game_state['opponent_tendency']
@@ -957,6 +691,62 @@ class PokerTrainer:
         
         return 0
 
+    def _evaluate_decision_quality(self, action, hand_strength, position, spr):
+        """Evaluate decision quality based on poker theory"""
+        # Position-based adjustments
+        position_multiplier = {
+            'BTN': 1.2,  # Button allows more aggressive play
+            'CO': 1.1,   # Cutoff is also strong
+            'MP': 1.0,   # Middle position is neutral
+            'UTG': 0.9,  # Under the gun requires caution
+            'BB': 0.95,  # Big blind defense
+            'SB': 0.9    # Small blind is worst position
+        }.get(position, 1.0)
+        
+        # Stack-to-pot ratio considerations
+        if spr < 3:  # Short stacked
+            if action == 'all-in' and hand_strength > 0.7:
+                return 1.0 * position_multiplier
+            if action == 'fold' and hand_strength < 0.3:
+                return 0.9 * position_multiplier
+        elif spr > 20:  # Deep stacked
+            if action == 'raise' and hand_strength > 0.8:
+                return 1.0 * position_multiplier
+            if action == 'call' and 0.6 < hand_strength < 0.8:
+                return 0.9 * position_multiplier
+        
+        # Basic hand strength alignment
+        if hand_strength > 0.8 and action in ['raise', 'all-in']:
+            return 1.0 * position_multiplier
+        if 0.6 <= hand_strength <= 0.8 and action in ['call', 'raise']:
+            return 0.9 * position_multiplier
+        if hand_strength < 0.3 and action == 'fold':
+            return 0.8 * position_multiplier
+            
+        return 0.5  # Default for unclear situations
+
+    def _evaluate_bluff(self, action, hand_strength, opponent_tendency):
+        """Evaluate bluffing efficiency"""
+        if action != 'raise' or hand_strength > 0.5:
+            return 1.0  # Not a bluff
+            
+        # Adjust based on opponent tendency
+        opponent_adjustment = {
+            'aggressive': 0.7,  # Harder to bluff aggressive players
+            'passive': 1.2,     # Easier to bluff passive players
+            'tight': 0.8,       # Harder to bluff tight players
+            'loose': 1.1        # Easier to bluff loose players
+        }
+        
+        tendency_mult = 1.0
+        for tendency, mult in opponent_adjustment.items():
+            if tendency in opponent_tendency.lower():
+                tendency_mult *= mult
+                
+        # Calculate bluff success probability
+        bluff_equity = (0.3 + (0.5 - hand_strength)) * tendency_mult
+        
+        return max(0.0, min(1.0, bluff_equity))
         
     def _save_checkpoint(self, epoch: int, metrics: Dict[str, float]):
         """Save a checkpoint"""
@@ -996,28 +786,8 @@ class PokerTrainer:
         with open(history_path, 'w') as f:
             json.dump(history, f, indent=2)
             
-    def verify_phoenix_connection(self):
-        """Verify Phoenix connection and tracing"""
-        try:
-            # Test trace
-            tracer = trace.get_tracer(__name__)
-            with tracer.start_as_current_span("test_span") as span:
-                span.set_attribute("test", "true")
-            
-            # Try to connect to Phoenix
-            import socket
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect(("localhost", 4317))
-            s.close()
-            
-            print("Phoenix connection verified")
-            return True
-        except Exception as e:
-            print(f"Phoenix verification failed: {str(e)}")
-            return False
-
     def _display_metrics(self, metrics: Dict):
-        """Display current metrics with proper formatting"""
+        """Display current metrics"""
         print(f"\nEpoch {metrics['epoch']}:")
         print(f"Training Metrics:")
         for metric, value in metrics['train_metrics'].items():
