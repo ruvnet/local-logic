@@ -537,8 +537,29 @@ class PokerTrainer:
         # Add sample hands to training data
         train_data.extend(sample_hands)
         
-        # Create validation data (subset of training data for now)
-        valid_data = sample_hands[:1]
+        # Create validation data with different scenarios
+        valid_data = [
+            {
+                'hand': "QS QC",  # Pocket queens
+                'table_cards': "AS KS 2D",
+                'position': "BB",
+                'pot_size': 800.0,
+                'stack_size': 2200.0,
+                'opponent_stack': 1900.0,
+                'game_type': "cash",
+                'opponent_tendency': "tight"
+            },
+            {
+                'hand': "JH TD",  # Connected cards
+                'table_cards': "",  # Preflop
+                'position': "CO",
+                'pot_size': 200.0,
+                'stack_size': 2000.0,
+                'opponent_stack': 2100.0,
+                'game_type': "tournament",
+                'opponent_tendency': "loose"
+            }
+        ]
         
         return train_data, valid_data
 
@@ -598,8 +619,10 @@ class PokerTrainer:
                 self._train_epoch(train_data)
 
             if epoch % self.config.validation_interval == 0:
-                valid_metrics = self.evaluator.evaluate(self.agent, valid_data)
-
+                # Calculate validation metrics using the same method as training
+                valid_metrics = self._calculate_batch_metrics(valid_data)
+                
+                # Calculate training metrics
                 train_metrics = self._train_epoch(train_data)
                 metrics = {
                     'epoch': epoch + 1,
@@ -775,6 +798,38 @@ class PokerTrainer:
             raise ValueError(f"Invalid suit: {suit}")
             
         return f"{rank}{suit}"
+
+    def _calculate_batch_metrics(self, data):
+        """Calculate metrics for a batch of data"""
+        total_metrics = {metric: 0.0 for metric in self.evaluator.metrics}
+        
+        for game_state in data:
+            # Get model prediction
+            prediction = self.agent(
+                hand=game_state['hand'],
+                table_cards=game_state['table_cards'],
+                position=game_state['position'],
+                pot_size=game_state['pot_size'],
+                stack_size=game_state['stack_size'],
+                opponent_stack=game_state['opponent_stack'],
+                game_type=game_state['game_type'],
+                opponent_tendency=game_state['opponent_tendency']
+            )
+            
+            # Calculate metrics for this prediction
+            metrics = self._calculate_real_metrics(prediction, game_state)
+            for metric in total_metrics:
+                total_metrics[metric] += metrics[metric]
+        
+        # Average the metrics
+        num_samples = len(data)
+        if num_samples > 0:
+            for metric in total_metrics:
+                total_metrics[metric] /= num_samples
+                # Clamp between 0 and 1
+                total_metrics[metric] = max(0.0, min(1.0, total_metrics[metric]))
+                
+        return total_metrics
 
     def _calculate_real_metrics(self, prediction, game_state):
         """Calculate real poker metrics"""
